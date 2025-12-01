@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patil Communication - Inventory v10</title>
+    <title>Patil Communication - Inventory v11</title>
     
     <!-- React & Tailwind -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -96,7 +96,8 @@
         ArrowLeft: (props) => <Icon {...props} p={<><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>} />,
         Printer: (props) => <Icon {...props} p={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>} />,
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
-        Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />
+        Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
+        Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />
     };
 
     const PRODUCT_DB = {
@@ -111,15 +112,28 @@
         "211116": { desc: "Cover (Type B)", code: "960", rate: 30 }
     };
 
+    const DEFAULT_SETTINGS = {
+        name: "PATIL COMMUNICATION",
+        address: "CS NO 357/4/B/9/20, Near Ganesh Mandir Kaman,\nMain Road, Uchgaon, Kolhapur,\nMaharashtra, 416005",
+        contact: "9270578571 / 7058297000",
+        gstin: "27BZGPP5505D1ZG",
+        email: "jyotipatiltelecom@gmail.com",
+        bankName: "HDFC Bank -3110 (Current A/c)",
+        acNo: "50200062603110",
+        ifsc: "SHAHUPURI & HDFC0000164"
+    };
+
     function App() {
         const [showIntro, setShowIntro] = useState(true);
-        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v10') || '[]'));
+        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v11') || '[]'));
+        const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem('patil_settings') || JSON.stringify(DEFAULT_SETTINGS)));
         const [status, setStatus] = useState({ type: '', msg: '' });
         
         // Workflow State
         const [workflowStep, setWorkflowStep] = useState('idle'); 
         const [currentScan, setCurrentScan] = useState(null); 
         const [editingItem, setEditingItem] = useState(null);
+        const [isSettingsOpen, setIsSettingsOpen] = useState(false);
         
         // Inputs
         const [manualDescInput, setManualDescInput] = useState("");
@@ -129,7 +143,7 @@
         const [priceInput, setPriceInput] = useState("");
 
         // Invoice Logic
-        const [invoiceStep, setInvoiceStep] = useState('idle'); // idle, input_no, select_format
+        const [invoiceStep, setInvoiceStep] = useState('idle'); 
         const [invoiceItem, setInvoiceItem] = useState(null);
         const [invoiceNo, setInvoiceNo] = useState("");
 
@@ -144,11 +158,12 @@
         };
         const timeoutRef = useRef(null);
 
-        useEffect(() => localStorage.setItem('patil_inventory_v10', JSON.stringify(items)), [items]);
+        useEffect(() => localStorage.setItem('patil_inventory_v11', JSON.stringify(items)), [items]);
+        useEffect(() => localStorage.setItem('patil_settings', JSON.stringify(settings)), [settings]);
 
         // Auto Focus Logic
         useEffect(() => {
-            if(!showIntro && !editingItem && invoiceStep === 'idle') {
+            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen) {
                 if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
                 if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
                 if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
@@ -157,7 +172,7 @@
                 if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
             }
             if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50);
-        }, [workflowStep, showIntro, editingItem, invoiceStep]);
+        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen]);
 
         const handleCancel = () => {
             setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput("");
@@ -208,6 +223,7 @@
             if(inputRef.current) inputRef.current.value = "";
         };
 
+        // --- HANDLERS ---
         const startManualEntry = () => { setManualDescInput(""); setWorkflowStep('manual_desc'); };
         const handleManualDescSubmit = (e) => { e.preventDefault(); const desc = manualDescInput.trim() || "Manual Item / Repair"; setCurrentScan({ desc: desc, code: "MANUAL", srNo: "-", rate: 0, customerName: "", entryMethod: 'manual' }); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
         const handleProductNameSubmit = (e) => { e.preventDefault(); const name = productNameInput.trim() || "Unknown Item"; setCurrentScan(prev => ({ ...prev, desc: name })); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
@@ -225,7 +241,8 @@
                 dateTime: `${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
                 rawDate: now.toISOString().split('T')[0],
                 desc: currentScan.desc, code: currentScan.code, srNo: currentScan.srNo, customer: currentScan.customerName || "-", 
-                gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-"
+                gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-",
+                invoiceNo: "" // Start empty, save later
             };
             newItem[categoryKey] = price;
             setItems(prev => [newItem, ...prev]);
@@ -236,25 +253,29 @@
         // --- INVOICE LOGIC ---
         const handleRowPrint = (item) => {
             setInvoiceItem(item);
-            setInvoiceNo(""); // Reset invoice no
+            setInvoiceNo(item.invoiceNo || ""); // Pre-fill if exists
             setInvoiceStep('input_no');
         };
 
         const handleInvoiceNoSubmit = (e) => {
             e.preventDefault();
+            // Update item with invoice number so it's remembered
+            const updatedItem = { ...invoiceItem, invoiceNo: invoiceNo };
+            setInvoiceItem(updatedItem);
+            
+            setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
             setInvoiceStep('select_format');
         };
 
         const handleInvoiceSkip = () => {
-            setInvoiceNo("_______");
+            // Keep empty in object, but show blank in print
+            setInvoiceNo(""); 
             setInvoiceStep('select_format');
         };
 
         const handleDownload = async (type) => {
             const invoiceElement = document.getElementById('invoice-section');
             if(!invoiceElement) return;
-
-            // Wait a tick for react to update DOM with invoice no
             await new Promise(resolve => setTimeout(resolve, 100));
 
             if (type === 'image') {
@@ -264,7 +285,6 @@
                 link.href = canvas.toDataURL('image/jpeg');
                 link.click();
             } else {
-                // PDF
                 const canvas = await html2canvas(invoiceElement, { scale: 2 });
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
@@ -274,7 +294,7 @@
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`Invoice_${invoiceItem.id}.pdf`);
             }
-            handleCancel(); // Close modal after download
+            handleCancel(); 
         };
 
         const numberToWords = (price) => {
@@ -288,22 +308,51 @@
             const categories = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'];
             const activeCat = categories.find(c => item[c] !== "-") || 'gkCash';
             const price = item[activeCat] === "-" ? "0" : item[activeCat];
-            setEditingItem({ ...item, currentCategory: activeCat, currentPrice: price });
+            setEditingItem({ 
+                ...item, 
+                currentCategory: activeCat, 
+                currentPrice: price,
+                editDate: item.dateTime.split(' ')[0], // Split Date & Time for simpler editing if needed
+                editTime: item.dateTime.split(' ')[1] 
+            });
         };
         const handleEditSave = (e) => {
             e.preventDefault();
-            const { id, currentCategory, currentPrice } = editingItem;
+            const { id, currentCategory, currentPrice, editDate, editTime } = editingItem;
             setItems(prev => prev.map(it => {
                 if (it.id === id) {
                     const updated = { ...editingItem };
+                    // Reset cats
                     ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => updated[c] = "-");
                     updated[currentCategory] = parseFloat(currentPrice).toFixed(2);
-                    delete updated.currentCategory; delete updated.currentPrice; return updated;
+                    // Update Date Time if changed (basic implementation)
+                    // updated.dateTime = `${editDate} ${editTime}`; // Assuming text input for simplicity or just keep original
+                    
+                    // Cleanup temp fields
+                    delete updated.currentCategory; delete updated.currentPrice; delete updated.editDate; delete updated.editTime; 
+                    return updated;
                 } return it;
             }));
             setEditingItem(null); setStatus({ type: 'success', msg: 'Item Updated' }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
         };
 
+        const handleDeleteFromEdit = () => {
+            if(confirm("Permanently delete this entry?")) {
+                setItems(prev => prev.filter(i => i.id !== editingItem.id));
+                setEditingItem(null);
+            }
+        };
+
+        const handlePrintFromEdit = () => {
+            // Save current state first if changed? logic simplified to just print current 'editingItem' state
+            // But we need it saved in main list to print properly usually.
+            // For now, close edit and trigger print on the item
+            const itemToPrint = items.find(i => i.id === editingItem.id);
+            setEditingItem(null);
+            handleRowPrint(itemToPrint);
+        };
+
+        // --- RENDER HELPERS ---
         const filteredItems = useMemo(() => {
             let data = items.filter(item => {
                 const matchesDate = searchDate ? item.rawDate === searchDate : true;
@@ -344,7 +393,7 @@
         return (
             <div className="min-h-screen font-sans text-slate-800 p-4 md:p-8 bg-slate-50 relative">
                 
-                {/* --- HIDDEN INVOICE TEMPLATE (Visible only during HTML2Canvas Capture) --- */}
+                {/* --- HIDDEN INVOICE TEMPLATE --- */}
                 {invoiceItem && (
                     <div id="invoice-container">
                         <div id="invoice-section" className="w-[210mm] bg-white p-8 text-black relative">
@@ -352,11 +401,11 @@
                             <div className="flex justify-between items-start mb-6">
                                 <div><div className="text-sm font-bold">Invoice No. {invoiceNo || "_______"}</div></div>
                                 <div className="text-center">
-                                    <h1 className="text-xl font-bold">PATIL COMMUNICATION</h1>
-                                    <p className="text-xs">CS NO 357/4/B/9/20, Near Ganesh Mandir Kaman,<br/>Main Road, Uchgaon, Kolhapur,<br/>Maharashtra, 416005</p>
-                                    <p className="text-xs font-bold mt-1">Contact: 9270578571 / 7058297000</p>
-                                    <p className="text-xs">GSTIN/UIN: 27BZGPP5505D1ZG</p>
-                                    <p className="text-xs">Email: jyotipatiltelecom@gmail.com</p>
+                                    <h1 className="text-xl font-bold uppercase">{settings.name}</h1>
+                                    <p className="text-xs whitespace-pre-line">{settings.address}</p>
+                                    <p className="text-xs font-bold mt-1">Contact: {settings.contact}</p>
+                                    <p className="text-xs">GSTIN/UIN: {settings.gstin}</p>
+                                    <p className="text-xs">Email: {settings.email}</p>
                                 </div>
                                 <div className="text-right text-sm">Dated: {new Date().toLocaleDateString()}</div>
                             </div>
@@ -382,7 +431,7 @@
                                         <td className="border border-black p-1 text-center">1</td>
                                         <td className="border border-black p-1 font-bold">
                                             {invoiceItem.desc}<br/>
-                                            <span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo}</span>
+                                            <span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo} | Code: {invoiceItem.code}</span>
                                             <div className="mt-4 text-right pr-4">CGST 9%</div>
                                             <div className="text-right pr-4">SGST 9%</div>
                                         </td>
@@ -428,12 +477,12 @@
                             <div className="flex text-xs mb-4">
                                 <div className="w-1/2 border border-black p-2 mr-2">
                                     <p className="font-bold underline mb-1">Company's Bank Details</p>
-                                    <p>Bank Name : HDFC Bank -3110 (Current A/c)</p>
-                                    <p>A/c No. : 50200062603110</p>
-                                    <p>Branch & IFS Code : SHAHUPURI & HDFC0000164</p>
+                                    <p>Bank Name : {settings.bankName}</p>
+                                    <p>A/c No. : {settings.acNo}</p>
+                                    <p>Branch & IFS Code : {settings.ifsc}</p>
                                 </div>
                                 <div className="w-1/2 border border-black p-2 flex flex-col justify-between text-right">
-                                    <p className="font-bold">for PATIL COMMUNICATION</p>
+                                    <p className="font-bold">for {settings.name}</p>
                                     <br/><br/>
                                     <p>Authorised Signatory</p>
                                 </div>
@@ -451,12 +500,13 @@
                     </div>
                 )}
 
-                {/* --- HEADER & MAIN (Same as before) --- */}
+                {/* --- HEADER --- */}
                 <header className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
-                    <div><h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2"><Icons.Package className="w-8 h-8 text-blue-600" />Patil Communication</h1><p className="text-slate-500">Inventory System v10.0</p></div>
-                    <div className="flex gap-4">
+                    <div><h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2"><Icons.Package className="w-8 h-8 text-blue-600" />{settings.name}</h1><p className="text-slate-500">Inventory System v11.0</p></div>
+                    <div className="flex gap-4 items-center">
                          <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[100px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Items</div><div className="text-xl font-bold text-slate-700">{filteredItems.length}</div></div>
                         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[140px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Sales</div><div className="text-xl font-bold text-green-600">₹{totalSales.toFixed(2)}</div></div>
+                        <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-200 rounded-full hover:bg-slate-300 text-slate-600"><Icons.Settings className="w-6 h-6" /></button>
                     </div>
                 </header>
 
@@ -521,12 +571,12 @@
                     </div>
                 </main>
 
-                {/* MODALS Code (Identical to previous) */}
+                {/* MODALS Code (Workflow) */}
                 {(['manual_desc', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category'].includes(workflowStep)) && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print">
                         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
                             <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
-                            
+                            {/* Workflow steps same as before... */}
                             {workflowStep === 'manual_desc' && <form onSubmit={handleManualDescSubmit}><h2 className="text-xl font-bold mb-4">Manual Entry</h2><input ref={modalRefs.manual} type="text" value={manualDescInput} onChange={(e) => setManualDescInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Item Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
                             {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-xl font-bold mb-1">Unknown Item</h2><p className="text-xs text-slate-400 mb-4 font-mono">{currentScan?.code}</p><input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Product Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
                             {workflowStep === 'customer_name' && <form onSubmit={handleCustomerNameSubmit}><h2 className="text-xl font-bold mb-4">Customer Name</h2><input ref={modalRefs.name} type="text" value={customerNameInput} onChange={(e) => setCustomerNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Name" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div><button type="button" onClick={handleCustomerSkip} className="w-full mt-2 text-sm text-slate-400 hover:text-slate-600">Skip Name</button></form>}
@@ -542,28 +592,19 @@
                     <div className="fixed inset-0 z-[150] flex items-center justify-center modal-overlay no-print">
                         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
                             <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
-                            
                             {invoiceStep === 'input_no' && (
                                 <form onSubmit={handleInvoiceNoSubmit}>
                                     <h2 className="text-xl font-bold mb-4">Enter Invoice Number</h2>
                                     <input ref={modalRefs.invoice} type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="e.g. INV-2024-001" />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold hover:bg-slate-200">Skip</button>
-                                        <button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Next</button>
-                                    </div>
+                                    <div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold hover:bg-slate-200">Skip</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Next</button></div>
                                 </form>
                             )}
-
                             {invoiceStep === 'select_format' && (
                                 <div>
                                     <h2 className="text-xl font-bold mb-6 text-center">Choose Format</h2>
                                     <div className="grid grid-cols-1 gap-4">
-                                        <button onClick={() => handleDownload('image')} className="flex items-center justify-center gap-3 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 text-blue-800 py-4 rounded-xl font-bold transition-all">
-                                            <Icons.Image className="w-6 h-6" /> Download Image (JPG)
-                                        </button>
-                                        <button onClick={() => handleDownload('pdf')} className="flex items-center justify-center gap-3 bg-red-50 border-2 border-red-200 hover:bg-red-100 text-red-800 py-4 rounded-xl font-bold transition-all">
-                                            <Icons.FileText className="w-6 h-6" /> Download PDF
-                                        </button>
+                                        <button onClick={() => handleDownload('image')} className="flex items-center justify-center gap-3 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 text-blue-800 py-4 rounded-xl font-bold transition-all"><Icons.Image className="w-6 h-6" /> Download Image (JPG)</button>
+                                        <button onClick={() => handleDownload('pdf')} className="flex items-center justify-center gap-3 bg-red-50 border-2 border-red-200 hover:bg-red-100 text-red-800 py-4 rounded-xl font-bold transition-all"><Icons.FileText className="w-6 h-6" /> Download PDF</button>
                                     </div>
                                 </div>
                             )}
@@ -571,20 +612,80 @@
                     </div>
                 )}
 
+                {/* ADMIN EDIT MODAL */}
                 {editingItem && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay no-print">
-                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full relative">
-                            <button onClick={() => setEditingItem(null)} className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-5 h-5" /></button>
-                            <h2 className="text-2xl font-bold mb-4">Edit Item</h2>
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full relative max-h-[90vh] overflow-y-auto">
+                            <div className="flex justify-between items-center mb-6 border-b pb-2">
+                                <h2 className="text-2xl font-bold">Admin Edit / Details</h2>
+                                <button onClick={() => setEditingItem(null)} className="text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-6 h-6" /></button>
+                            </div>
+                            
                             <form onSubmit={handleEditSave} className="space-y-4">
-                                <div><label className="text-xs font-bold text-slate-500">Product</label><input type="text" value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                <div><label className="text-xs font-bold text-slate-500">Customer</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value})} className="w-full border p-2 rounded" /></div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-xs font-bold text-slate-500">Price</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500">Category</label><select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded">{['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Date/Time</label><input type="text" value={editingItem.dateTime} readOnly className="w-full border p-2 rounded bg-slate-100" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Invoice No (Saved)</label><input type="text" value={editingItem.invoiceNo || ""} onChange={e => setEditingItem({...editingItem, invoiceNo: e.target.value})} className="w-full border p-2 rounded" placeholder="Will auto-fill on print" /></div>
                                 </div>
-                                <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded font-bold">Save Changes</button>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Product Name</label><input type="text" value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Item Code</label><input type="text" value={editingItem.code} onChange={e => setEditingItem({...editingItem, code: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-xs font-bold text-slate-500">Serial No / Batch</label><input type="text" value={editingItem.srNo} onChange={e => setEditingItem({...editingItem, srNo: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Customer Details</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                </div>
+
+                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                    <h3 className="text-sm font-bold text-slate-700 mb-2">Financials</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div><label className="text-xs font-bold text-slate-500">Amount (₹)</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded text-lg font-bold text-green-600" /></div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500">Category / Column</label>
+                                            <select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded bg-white">
+                                                {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c.replace(/([A-Z])/g, ' $1').trim()}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-4 border-t">
+                                    <button type="button" onClick={handlePrintFromEdit} className="flex-1 bg-green-100 text-green-700 py-3 rounded font-bold hover:bg-green-200 flex justify-center gap-2"><Icons.Printer className="w-5 h-5"/> Reprint Bill</button>
+                                    <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">Save Changes</button>
+                                    <button type="button" onClick={handleDeleteFromEdit} className="px-4 bg-red-100 text-red-600 rounded hover:bg-red-200"><Icons.Trash className="w-5 h-5" /></button>
+                                </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* SHOP SETTINGS MODAL */}
+                {isSettingsOpen && (
+                    <div className="fixed inset-0 z-[160] flex items-center justify-center modal-overlay no-print">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full relative max-h-[90vh] overflow-y-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold">Shop Settings</h2>
+                                <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-6 h-6" /></button>
+                            </div>
+                            <div className="space-y-4">
+                                <div><label className="text-xs font-bold text-slate-500">Shop Name</label><input type="text" value={settings.name} onChange={e => setSettings({...settings, name: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                <div><label className="text-xs font-bold text-slate-500">Address (Use enter for new lines)</label><textarea rows="3" value={settings.address} onChange={e => setSettings({...settings, address: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-xs font-bold text-slate-500">Contact No</label><input type="text" value={settings.contact} onChange={e => setSettings({...settings, contact: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Email</label><input type="text" value={settings.email} onChange={e => setSettings({...settings, email: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                </div>
+                                <div><label className="text-xs font-bold text-slate-500">GSTIN</label><input type="text" value={settings.gstin} onChange={e => setSettings({...settings, gstin: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                <div className="p-3 bg-blue-50 rounded">
+                                    <h4 className="font-bold text-sm mb-2 text-blue-800">Bank Details for Bill</h4>
+                                    <div className="space-y-2">
+                                        <input type="text" value={settings.bankName} onChange={e => setSettings({...settings, bankName: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="Bank Name" />
+                                        <input type="text" value={settings.acNo} onChange={e => setSettings({...settings, acNo: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="A/c No" />
+                                        <input type="text" value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="Branch & IFSC" />
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-blue-600 text-white py-3 rounded font-bold">Save Settings</button>
+                            </div>
                         </div>
                     </div>
                 )}
