@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patil Communication - Inventory v10</title>
+    
+    <!-- React & Tailwind -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- QR Scanner -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- PDF & Image Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sort-icon::after { content: ' ↕'; opacity: 0.3; }
+        .sort-asc::after { content: ' ↑'; opacity: 1; }
+        .sort-desc::after { content: ' ↓'; opacity: 1; }
+
+        /* --- ANIMATION CSS --- */
+        .intro-container { background: radial-gradient(circle, #2a0a0a 0%, #000000 100%); color: #ff0000; overflow: hidden; }
+        .cube-scene { width: 150px; height: 150px; perspective: 600px; margin-bottom: 40px; }
+        .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spinCube 8s infinite linear; }
+        .cube__face { position: absolute; width: 150px; height: 150px; border: 2px solid rgba(255, 0, 0, 0.8); box-shadow: 0 0 15px rgba(255, 0, 0, 0.6), inset 0 0 20px rgba(255, 0, 0, 0.3); background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; }
+        .cube__face::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255, 0, 0, 0.3); }
+        .cube__face::after { content: ''; position: absolute; left: 50%; top: 0; height: 100%; width: 1px; background: rgba(255, 0, 0, 0.3); }
+        .cube__face--front  { transform: rotateY(  0deg) translateZ(75px); }
+        .cube__face--right  { transform: rotateY( 90deg) translateZ(75px); }
+        .cube__face--back   { transform: rotateY(180deg) translateZ(75px); }
+        .cube__face--left   { transform: rotateY(-90deg) translateZ(75px); }
+        .cube__face--top    { transform: rotateX( 90deg) translateZ(75px); }
+        .cube__face--bottom { transform: rotateX(-90deg) translateZ(75px); }
+        @keyframes spinCube { 0% { transform: rotateX(0deg) rotateY(0deg); } 100% { transform: rotateX(360deg) rotateY(360deg); } }
+        .text-reveal { animation: blurIn 1.5s forwards; }
+        .text-name { animation: scaleIn 0.8s forwards; text-shadow: 0 0 10px #ff0000; }
+        @keyframes blurIn { 0% { opacity: 0; filter: blur(10px); } 100% { opacity: 1; filter: blur(0); } }
+        @keyframes scaleIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Hide Invoice in UI, show only during generation */
+        #invoice-container { position: fixed; top: -10000px; left: -10000px; }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+<div id="reader-hidden" style="display: none;"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- INTRO ---
+    const IntroAnimation = ({ onComplete }) => {
+        const [showName, setShowName] = useState(false);
+        useEffect(() => {
+            const t1 = setTimeout(() => setShowName(true), 2000); 
+            const t2 = setTimeout(onComplete, 5000); 
+            return () => { clearTimeout(t1); clearTimeout(t2); };
+        }, [onComplete]);
+        return (
+            <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center intro-container">
+                <div className="cube-scene"><div className="cube"><div className="cube__face cube__face--front"></div><div className="cube__face cube__face--back"></div><div className="cube__face cube__face--right"></div><div className="cube__face cube__face--left"></div><div className="cube__face cube__face--top"></div><div className="cube__face cube__face--bottom"></div></div></div>
+                <div className="text-center space-y-4 relative h-24 w-full flex flex-col items-center justify-center">
+                    {!showName ? <h2 className="text-2xl font-light tracking-[0.5em] uppercase text-red-500 text-reveal absolute">Created By</h2> : <h1 className="text-5xl font-bold tracking-widest text-white text-name absolute">Krishna.1_6</h1>}
+                </div>
+                <div className="absolute bottom-8 text-xs text-red-800 tracking-widest uppercase opacity-60">© Copyright 2024 Krishna.1_6 | All Rights Reserved</div>
+            </div>
+        );
+    };
+
+    // --- ICONS ---
+    const Icon = ({ p, c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}>{p}</svg>;
+    const Icons = {
+        Trash: (props) => <Icon {...props} p={<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>} />,
+        Download: (props) => <Icon {...props} p={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />,
+        Search: (props) => <Icon {...props} p={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} />,
+        Package: (props) => <Icon {...props} p={<><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>} />,
+        Check: (props) => <Icon {...props} p={<polyline points="20 6 9 17 4 12"/>} />,
+        Calendar: (props) => <Icon {...props} p={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>} />,
+        Filter: (props) => <Icon {...props} p={<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>} />,
+        User: (props) => <Icon {...props} p={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />,
+        Edit: (props) => <Icon {...props} p={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />,
+        Upload: (props) => <Icon {...props} p={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />,
+        X: (props) => <Icon {...props} p={<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>} />,
+        ArrowLeft: (props) => <Icon {...props} p={<><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>} />,
+        Printer: (props) => <Icon {...props} p={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>} />,
+        FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
+        Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />
+    };
+
+    const PRODUCT_DB = {
+        "004201": { desc: "LG MC2846SL 28L Convection Microwave Oven", code: "925600", rate: 10847.46 },
+        "033105": { desc: "LG MC 2146BG.DBKQI-Microwave Oven", code: "922000", rate: 9322.03 },
+        "076643": { desc: "LG MS3032BK 30L Solo Oven", code: "922000", rate: 9322.03 },
+        "322503": { desc: "LG 43UR75506LC 43\" LED", code: "962000", rate: 26271.19 },
+        "040409": { desc: "LG FHP1410Z5M/FL/10kg /WM", code: "983000", rate: 35169.49 },
+        "1S706":  { desc: "LG DFB532FP Dishwasher", code: "998000", rate: 41525.42 },
+        "21115":  { desc: "VIVO COMBO- N", code: "91100", rate: 550 },
+        "21116-15": { desc: "Cover (Standard)", code: "980", rate: 40 },
+        "211116": { desc: "Cover (Type B)", code: "960", rate: 30 }
+    };
+
+    function App() {
+        const [showIntro, setShowIntro] = useState(true);
+        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v10') || '[]'));
+        const [status, setStatus] = useState({ type: '', msg: '' });
+        
+        // Workflow State
+        const [workflowStep, setWorkflowStep] = useState('idle'); 
+        const [currentScan, setCurrentScan] = useState(null); 
+        const [editingItem, setEditingItem] = useState(null);
+        
+        // Inputs
+        const [manualDescInput, setManualDescInput] = useState("");
+        const [productNameInput, setProductNameInput] = useState(""); 
+        const [customerNameInput, setCustomerNameInput] = useState("");
+        const [customerMobileInput, setCustomerMobileInput] = useState("");
+        const [priceInput, setPriceInput] = useState("");
+
+        // Invoice Logic
+        const [invoiceStep, setInvoiceStep] = useState('idle'); // idle, input_no, select_format
+        const [invoiceItem, setInvoiceItem] = useState(null);
+        const [invoiceNo, setInvoiceNo] = useState("");
+
+        const [searchDate, setSearchDate] = useState("");
+        const [searchQuery, setSearchQuery] = useState("");
+        const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+
+        const inputRef = useRef(null); 
+        const fileInputRef = useRef(null);
+        const modalRefs = {
+            product: useRef(null), manual: useRef(null), name: useRef(null), mobile: useRef(null), price: useRef(null), invoice: useRef(null)
+        };
+        const timeoutRef = useRef(null);
+
+        useEffect(() => localStorage.setItem('patil_inventory_v10', JSON.stringify(items)), [items]);
+
+        // Auto Focus Logic
+        useEffect(() => {
+            if(!showIntro && !editingItem && invoiceStep === 'idle') {
+                if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
+                if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
+                if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
+                if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50);
+                if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50);
+                if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
+            }
+            if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50);
+        }, [workflowStep, showIntro, editingItem, invoiceStep]);
+
+        const handleCancel = () => {
+            setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput("");
+            setInvoiceStep('idle'); setInvoiceItem(null); setInvoiceNo("");
+            if(inputRef.current) inputRef.current.focus();
+        };
+
+        const handleBack = () => {
+            switch (workflowStep) {
+                case 'category': setWorkflowStep('price'); break;
+                case 'price': setWorkflowStep('customer_mobile'); break;
+                case 'customer_mobile': setWorkflowStep('customer_name'); break;
+                case 'customer_name': 
+                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc');
+                    else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name');
+                    else handleCancel(); 
+                    break;
+                case 'manual_desc':
+                case 'product_name': handleCancel(); break;
+                default: handleCancel();
+            }
+        };
+
+        // --- SCAN LOGIC ---
+        const handleScan = (code) => {
+            if(!code) return;
+            if (code.includes(',')) {
+                const clean = (s) => s.replace(/^(Prod|Product|Name|SrNo|SN|Serial|Code|Item|Price|Rate|MRP)[\s.:-]+/i, "").trim();
+                const parts = code.split(',').map(s => s.trim());
+                if (parts.length >= 3) {
+                    const price = parts.length > 3 ? (parseFloat(clean(parts[3]).replace(/[^\d.]/g, '')) || 0) : 0;
+                    setCurrentScan({ desc: clean(parts[0]), code: clean(parts[2]), srNo: clean(parts[1]), rate: price, customerName: "", entryMethod: 'scan' });
+                    setPriceInput((price && !isNaN(price)) ? price.toString() : ""); 
+                    setCustomerNameInput(""); setWorkflowStep('customer_name'); 
+                    if(inputRef.current) inputRef.current.value = ""; return;
+                }
+            }
+            const product = PRODUCT_DB[code];
+            if (product) {
+                setCurrentScan({ ...product, srNo: code, customerName: "", entryMethod: 'scan' });
+                setPriceInput(product.rate > 0 ? product.rate.toString() : ""); 
+                setCustomerNameInput(""); setWorkflowStep('customer_name');
+            } else {
+                setCurrentScan({ code: code, srNo: code, rate: 0, customerName: "", entryMethod: 'unknown' });
+                const looksLikeName = isNaN(code) && code.length > 3;
+                setProductNameInput(looksLikeName ? code : ""); setWorkflowStep('product_name');
+            }
+            if(inputRef.current) inputRef.current.value = "";
+        };
+
+        const startManualEntry = () => { setManualDescInput(""); setWorkflowStep('manual_desc'); };
+        const handleManualDescSubmit = (e) => { e.preventDefault(); const desc = manualDescInput.trim() || "Manual Item / Repair"; setCurrentScan({ desc: desc, code: "MANUAL", srNo: "-", rate: 0, customerName: "", entryMethod: 'manual' }); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
+        const handleProductNameSubmit = (e) => { e.preventDefault(); const name = productNameInput.trim() || "Unknown Item"; setCurrentScan(prev => ({ ...prev, desc: name })); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
+        const handleCustomerNameSubmit = (e) => { e.preventDefault(); const name = customerNameInput.trim(); if(name) { setCurrentScan(prev => ({ ...prev, tempName: name })); setCustomerMobileInput(""); setWorkflowStep('customer_mobile'); } else { handleCustomerSkip(); } };
+        const handleCustomerSkip = () => { setCurrentScan(prev => ({ ...prev, customerName: "" })); setWorkflowStep('price'); };
+        const handleCustomerMobileSubmit = (e) => { e.preventDefault(); const mobile = customerMobileInput.trim(); const name = currentScan.tempName; const fullName = mobile ? `${name} (${mobile})` : name; setCurrentScan(prev => ({ ...prev, customerName: fullName })); setWorkflowStep('price'); };
+        const handlePriceSubmit = (e) => { e.preventDefault(); const price = parseFloat(priceInput); if (!price || isNaN(price)) { alert("Invalid price"); return; } setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); };
+
+        const handleCategorySelect = (categoryKey) => {
+            if (!currentScan) return;
+            const price = currentScan.confirmedPrice.toFixed(2);
+            const now = new Date();
+            const newItem = {
+                id: Date.now(),
+                dateTime: `${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                rawDate: now.toISOString().split('T')[0],
+                desc: currentScan.desc, code: currentScan.code, srNo: currentScan.srNo, customer: currentScan.customerName || "-", 
+                gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-"
+            };
+            newItem[categoryKey] = price;
+            setItems(prev => [newItem, ...prev]);
+            setStatus({ type: 'success', msg: `Saved to ${categoryKey}`, showPrint: false }); 
+            handleCancel(); 
+        };
+
+        // --- INVOICE LOGIC ---
+        const handleRowPrint = (item) => {
+            setInvoiceItem(item);
+            setInvoiceNo(""); // Reset invoice no
+            setInvoiceStep('input_no');
+        };
+
+        const handleInvoiceNoSubmit = (e) => {
+            e.preventDefault();
+            setInvoiceStep('select_format');
+        };
+
+        const handleInvoiceSkip = () => {
+            setInvoiceNo("_______");
+            setInvoiceStep('select_format');
+        };
+
+        const handleDownload = async (type) => {
+            const invoiceElement = document.getElementById('invoice-section');
+            if(!invoiceElement) return;
+
+            // Wait a tick for react to update DOM with invoice no
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            if (type === 'image') {
+                const canvas = await html2canvas(invoiceElement, { scale: 2 });
+                const link = document.createElement('a');
+                link.download = `Invoice_${invoiceItem.id}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg');
+                link.click();
+            } else {
+                // PDF
+                const canvas = await html2canvas(invoiceElement, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`Invoice_${invoiceItem.id}.pdf`);
+            }
+            handleCancel(); // Close modal after download
+        };
+
+        const numberToWords = (price) => {
+            const num = parseInt(price);
+            if (num === 0) return "Zero Only";
+            return `INR ${num} Only`; 
+        };
+
+        // --- EDIT LOGIC ---
+        const handleEditClick = (item) => {
+            const categories = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'];
+            const activeCat = categories.find(c => item[c] !== "-") || 'gkCash';
+            const price = item[activeCat] === "-" ? "0" : item[activeCat];
+            setEditingItem({ ...item, currentCategory: activeCat, currentPrice: price });
+        };
+        const handleEditSave = (e) => {
+            e.preventDefault();
+            const { id, currentCategory, currentPrice } = editingItem;
+            setItems(prev => prev.map(it => {
+                if (it.id === id) {
+                    const updated = { ...editingItem };
+                    ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => updated[c] = "-");
+                    updated[currentCategory] = parseFloat(currentPrice).toFixed(2);
+                    delete updated.currentCategory; delete updated.currentPrice; return updated;
+                } return it;
+            }));
+            setEditingItem(null); setStatus({ type: 'success', msg: 'Item Updated' }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+        };
+
+        const filteredItems = useMemo(() => {
+            let data = items.filter(item => {
+                const matchesDate = searchDate ? item.rawDate === searchDate : true;
+                const query = searchQuery.toLowerCase();
+                return matchesDate && (searchQuery ? JSON.stringify(item).toLowerCase().includes(query) : true);
+            });
+            if (sortConfig.key) {
+                data.sort((a, b) => {
+                    let valA = parseFloat(a[sortConfig.key]) || 0; let valB = parseFloat(b[sortConfig.key]) || 0;
+                    return sortConfig.direction === 'ascending' ? valA - valB : valB - valA;
+                });
+            }
+            return data;
+        }, [items, searchDate, searchQuery, sortConfig]);
+
+        const totalSales = useMemo(() => filteredItems.reduce((acc, item) => {
+            const val = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(item[k]) || 0).reduce((a, b) => a + b, 0);
+            return acc + val;
+        }, 0), [filteredItems]);
+
+        const requestSort = (key) => setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'ascending' ? 'descending' : 'ascending' });
+        const getSortClass = (key) => sortConfig.key === key ? (sortConfig.direction === 'ascending' ? 'sort-asc' : 'sort-desc') : 'sort-icon';
+
+        const handleScanInput = (e) => {
+            const val = e.target.value;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300);
+        };
+        const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim());
+        const handleImageUpload = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const html5QrCode = new Html5Qrcode("reader-hidden"); setStatus({ type: 'info', msg: 'Scanning...' });
+            html5QrCode.scanFile(file, true).then(handleScan).catch(() => setStatus({ type: 'error', msg: 'No code found' })); e.target.value = '';
+        };
+
+        if (showIntro) return <IntroAnimation onComplete={() => setShowIntro(false)} />;
+
+        return (
+            <div className="min-h-screen font-sans text-slate-800 p-4 md:p-8 bg-slate-50 relative">
+                
+                {/* --- HIDDEN INVOICE TEMPLATE (Visible only during HTML2Canvas Capture) --- */}
+                {invoiceItem && (
+                    <div id="invoice-container">
+                        <div id="invoice-section" className="w-[210mm] bg-white p-8 text-black relative">
+                            <div className="text-center font-bold text-xs uppercase mb-2 border-b pb-2">Subject to Kolhapur Jurisdiction</div>
+                            <div className="flex justify-between items-start mb-6">
+                                <div><div className="text-sm font-bold">Invoice No. {invoiceNo || "_______"}</div></div>
+                                <div className="text-center">
+                                    <h1 className="text-xl font-bold">PATIL COMMUNICATION</h1>
+                                    <p className="text-xs">CS NO 357/4/B/9/20, Near Ganesh Mandir Kaman,<br/>Main Road, Uchgaon, Kolhapur,<br/>Maharashtra, 416005</p>
+                                    <p className="text-xs font-bold mt-1">Contact: 9270578571 / 7058297000</p>
+                                    <p className="text-xs">GSTIN/UIN: 27BZGPP5505D1ZG</p>
+                                    <p className="text-xs">Email: jyotipatiltelecom@gmail.com</p>
+                                </div>
+                                <div className="text-right text-sm">Dated: {new Date().toLocaleDateString()}</div>
+                            </div>
+                            <h2 className="text-center font-bold text-lg mb-4 underline">TAX INVOICE</h2>
+                            <div className="mb-4">
+                                <p className="font-bold">Party : {invoiceItem.customer}</p>
+                                <p className="text-sm">State Name : Maharashtra, Code : 27</p>
+                            </div>
+                            <table className="w-full border-collapse border border-black text-xs mb-4">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="border border-black p-1 w-10">Sl No.</th>
+                                        <th className="border border-black p-1">Description of Goods</th>
+                                        <th className="border border-black p-1 w-16">HSN/SAC</th>
+                                        <th className="border border-black p-1 w-16">Quantity</th>
+                                        <th className="border border-black p-1 w-20">Rate</th>
+                                        <th className="border border-black p-1 w-12">per</th>
+                                        <th className="border border-black p-1 w-24">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-black p-1 text-center">1</td>
+                                        <td className="border border-black p-1 font-bold">
+                                            {invoiceItem.desc}<br/>
+                                            <span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo}</span>
+                                            <div className="mt-4 text-right pr-4">CGST 9%</div>
+                                            <div className="text-right pr-4">SGST 9%</div>
+                                        </td>
+                                        <td className="border border-black p-1 text-center">8517</td>
+                                        <td className="border border-black p-1 text-center font-bold">1 Nos</td>
+                                        <td className="border border-black p-1 text-right">
+                                            {(() => {
+                                                const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0);
+                                                return (total/1.18).toFixed(2);
+                                            })()}
+                                        </td>
+                                        <td className="border border-black p-1 text-center">Nos</td>
+                                        <td className="border border-black p-1 text-right font-bold align-top">
+                                            {(() => {
+                                                const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0);
+                                                const basic = total/1.18;
+                                                const tax = total - basic;
+                                                const halfTax = tax/2;
+                                                return (
+                                                    <>
+                                                        <div>{basic.toFixed(2)}</div>
+                                                        <div className="mt-4">{halfTax.toFixed(2)}</div>
+                                                        <div>{halfTax.toFixed(2)}</div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </td>
+                                    </tr>
+                                    <tr className="font-bold">
+                                        <td colSpan="3" className="border border-black p-1 text-right">Total</td>
+                                        <td className="border border-black p-1 text-center">1 Nos</td>
+                                        <td colSpan="2" className="border border-black p-1"></td>
+                                        <td className="border border-black p-1 text-right">
+                                            ₹ {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div className="border border-black p-2 text-xs mb-2">
+                                <span className="font-bold">Amount Chargeable (in words):</span> <br/>
+                                <span className="font-bold text-sm uppercase">{numberToWords(['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0))}</span>
+                            </div>
+                            <div className="flex text-xs mb-4">
+                                <div className="w-1/2 border border-black p-2 mr-2">
+                                    <p className="font-bold underline mb-1">Company's Bank Details</p>
+                                    <p>Bank Name : HDFC Bank -3110 (Current A/c)</p>
+                                    <p>A/c No. : 50200062603110</p>
+                                    <p>Branch & IFS Code : SHAHUPURI & HDFC0000164</p>
+                                </div>
+                                <div className="w-1/2 border border-black p-2 flex flex-col justify-between text-right">
+                                    <p className="font-bold">for PATIL COMMUNICATION</p>
+                                    <br/><br/>
+                                    <p>Authorised Signatory</p>
+                                </div>
+                            </div>
+                            <div className="text-[10px]">
+                                <p className="font-bold underline">Declaration</p>
+                                <ol className="list-decimal pl-4">
+                                    <li>Goods once sold will not be taken back.</li>
+                                    <li>Interest @ 24% p.a. will be charged if payment is not made within due date.</li>
+                                    <li>Subject to Kolhapur Jurisdiction only.</li>
+                                </ol>
+                            </div>
+                            <div className="text-center border-t mt-4 pt-1 text-[10px]">This is a Computer Generated Invoice</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- HEADER & MAIN (Same as before) --- */}
+                <header className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+                    <div><h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2"><Icons.Package className="w-8 h-8 text-blue-600" />Patil Communication</h1><p className="text-slate-500">Inventory System v10.0</p></div>
+                    <div className="flex gap-4">
+                         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[100px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Items</div><div className="text-xl font-bold text-slate-700">{filteredItems.length}</div></div>
+                        <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[140px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Sales</div><div className="text-xl font-bold text-green-600">₹{totalSales.toFixed(2)}</div></div>
+                    </div>
+                </header>
+
+                <main className="max-w-full mx-auto no-print">
+                    <div className="bg-white rounded-xl shadow-lg border-2 border-blue-500 p-6 mb-6 flex gap-4">
+                        <div className="relative flex-1">
+                            <input ref={inputRef} type="text" onChange={handleScanInput} onKeyDown={handleScanKeyDown} className="w-full pl-12 pr-4 py-4 text-2xl font-mono border-2 border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:shadow-lg transition-all" placeholder="Scan Barcode Here..." disabled={workflowStep !== 'idle'} autoFocus />
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"><Icons.Search className="w-6 h-6" /></div>
+                        </div>
+                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                        <button onClick={() => fileInputRef.current.click()} className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-4 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center min-w-[100px]" disabled={workflowStep !== 'idle'}><Icons.Download className="w-6 h-6 mb-1 rotate-180" /><span className="text-xs uppercase">Upload</span></button>
+                        <button onClick={startManualEntry} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 rounded-lg border-2 border-slate-200 flex flex-col items-center justify-center min-w-[120px]" disabled={workflowStep !== 'idle'}><Icons.Edit className="w-6 h-6 mb-1" /><span className="text-xs uppercase">Manual</span></button>
+                    </div>
+
+                    {status.msg && <div className={`mb-4 p-3 rounded font-bold text-center ${status.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{status.msg}</div>}
+
+                    <div className="bg-slate-200 p-4 rounded-xl mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div className="flex gap-4 w-full md:w-auto flex-1">
+                            <div className="relative flex items-center bg-white rounded-lg px-3 py-2 flex-1 md:flex-none"><Icons.Calendar className="w-4 h-4 text-slate-400 mr-2" /><input type="date" value={searchDate} onChange={(e) => setSearchDate(e.target.value)} className="outline-none text-sm w-full"/>{searchDate && <button onClick={() => setSearchDate("")} className="ml-2 text-xs text-red-500 font-bold">X</button>}</div>
+                            <div className="relative flex items-center bg-white rounded-lg px-3 py-2 flex-1"><Icons.Filter className="w-4 h-4 text-slate-400 mr-2" /><input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="outline-none text-sm w-full"/>{searchQuery && <button onClick={() => setSearchQuery("")} className="ml-2 text-xs text-red-500 font-bold">X</button>}</div>
+                        </div>
+                        <button onClick={() => { /* reuse CSV logic */ }} className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md"><Icons.Download className="w-4 h-4" /> Export</button>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[1300px]">
+                                <thead>
+                                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 select-none">
+                                        <th className="p-3 text-xs font-bold uppercase whitespace-nowrap">Date & Time</th>
+                                        <th className="p-3 text-xs font-bold uppercase">Customer</th>
+                                        <th className="p-3 text-xs font-bold uppercase w-1/4">Product</th>
+                                        <th className="p-3 text-xs font-bold uppercase">Code</th>
+                                        <th className="p-3 text-xs font-bold uppercase">Sr. No</th>
+                                        {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(key => (
+                                            <th key={key} onClick={() => requestSort(key)} className={`p-3 text-xs font-bold uppercase text-right cursor-pointer hover:bg-slate-200 ${getSortClass(key)}`}>{key.replace(/([A-Z])/g, ' $1').trim()}</th>
+                                        ))}
+                                        <th className="p-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredItems.map((item) => (
+                                        <tr key={item.id} className="hover:bg-slate-50 text-sm">
+                                            <td className="p-3 text-slate-500 font-mono text-xs">{item.dateTime}</td>
+                                            <td className="p-3 font-medium">{item.customer}</td>
+                                            <td className="p-3 text-slate-700">{item.desc}</td>
+                                            <td className="p-3 text-slate-500 font-mono text-xs">{item.code}</td>
+                                            <td className="p-3 text-slate-700 font-mono text-xs font-bold">{item.srNo}</td>
+                                            {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(key => (
+                                                <td key={key} className="p-3 text-right font-mono font-bold text-slate-700">{item[key]}</td>
+                                            ))}
+                                            <td className="p-3 text-center flex justify-center gap-2">
+                                                <button onClick={() => handleRowPrint(item)} className="text-green-500 hover:text-green-700" title="Print Bill"><Icons.Printer className="w-4 h-4" /></button>
+                                                <button onClick={() => handleEditClick(item)} className="text-blue-400 hover:text-blue-600" title="Edit"><Icons.Edit className="w-4 h-4" /></button>
+                                                <button onClick={() => { if(confirm("Delete?")) setItems(prev => prev.filter(i => i.id !== item.id)) }} className="text-red-300 hover:text-red-500" title="Delete"><Icons.Trash className="w-4 h-4" /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+
+                {/* MODALS Code (Identical to previous) */}
+                {(['manual_desc', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category'].includes(workflowStep)) && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
+                            <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
+                            
+                            {workflowStep === 'manual_desc' && <form onSubmit={handleManualDescSubmit}><h2 className="text-xl font-bold mb-4">Manual Entry</h2><input ref={modalRefs.manual} type="text" value={manualDescInput} onChange={(e) => setManualDescInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Item Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
+                            {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-xl font-bold mb-1">Unknown Item</h2><p className="text-xs text-slate-400 mb-4 font-mono">{currentScan?.code}</p><input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Product Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
+                            {workflowStep === 'customer_name' && <form onSubmit={handleCustomerNameSubmit}><h2 className="text-xl font-bold mb-4">Customer Name</h2><input ref={modalRefs.name} type="text" value={customerNameInput} onChange={(e) => setCustomerNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Name" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div><button type="button" onClick={handleCustomerSkip} className="w-full mt-2 text-sm text-slate-400 hover:text-slate-600">Skip Name</button></form>}
+                            {workflowStep === 'customer_mobile' && <form onSubmit={handleCustomerMobileSubmit}><h2 className="text-xl font-bold mb-4">Mobile Number</h2><input ref={modalRefs.mobile} type="number" value={customerMobileInput} onChange={(e) => setCustomerMobileInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Mobile" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-green-600 text-white py-3 rounded-lg font-bold">Save</button></div><button type="button" onClick={handleCustomerMobileSubmit} className="w-full mt-2 text-sm text-slate-400 hover:text-slate-600">Skip Number</button></form>}
+                            {workflowStep === 'price' && <form onSubmit={handlePriceSubmit}><h2 className="text-xl font-bold mb-1">Confirm Price</h2><p className="text-slate-500 mb-4 text-sm">{currentScan?.desc}</p><input ref={modalRefs.price} type="number" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full text-4xl font-bold text-center border-b-2 py-2 mb-6" step="0.01" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
+                            {workflowStep === 'category' && <div className="w-full"><div className="text-center mb-6"><h2 className="text-2xl font-bold">Select Category</h2><p className="text-slate-500">₹{parseFloat(currentScan?.confirmedPrice).toFixed(2)}</p></div><div className="grid grid-cols-2 gap-3 mb-4"><button onClick={() => handleCategorySelect('gkCash')} className="p-3 bg-green-50 border border-green-200 text-green-800 font-bold rounded">GK Cash</button><button onClick={() => handleCategorySelect('gkBank')} className="p-3 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded">GK Bank</button><button onClick={() => handleCategorySelect('unGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded">UN GST</button><button onClick={() => handleCategorySelect('unNonGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded">UN Non-GST</button><button onClick={() => handleCategorySelect('un1ac')} className="p-3 bg-purple-50 border border-purple-200 text-purple-800 font-bold rounded">UN 1 AC</button><button onClick={() => handleCategorySelect('un2ac')} className="p-3 bg-orange-50 border border-orange-200 text-orange-800 font-bold rounded">UN 2 AC</button></div><button onClick={handleBack} className="w-full py-2 bg-gray-200 rounded font-bold text-gray-600">Back</button></div>}
+                        </div>
+                    </div>
+                )}
+
+                {/* INVOICE OPTIONS MODAL */}
+                {invoiceStep !== 'idle' && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center modal-overlay no-print">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
+                            <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
+                            
+                            {invoiceStep === 'input_no' && (
+                                <form onSubmit={handleInvoiceNoSubmit}>
+                                    <h2 className="text-xl font-bold mb-4">Enter Invoice Number</h2>
+                                    <input ref={modalRefs.invoice} type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="e.g. INV-2024-001" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold hover:bg-slate-200">Skip</button>
+                                        <button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Next</button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {invoiceStep === 'select_format' && (
+                                <div>
+                                    <h2 className="text-xl font-bold mb-6 text-center">Choose Format</h2>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <button onClick={() => handleDownload('image')} className="flex items-center justify-center gap-3 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 text-blue-800 py-4 rounded-xl font-bold transition-all">
+                                            <Icons.Image className="w-6 h-6" /> Download Image (JPG)
+                                        </button>
+                                        <button onClick={() => handleDownload('pdf')} className="flex items-center justify-center gap-3 bg-red-50 border-2 border-red-200 hover:bg-red-100 text-red-800 py-4 rounded-xl font-bold transition-all">
+                                            <Icons.FileText className="w-6 h-6" /> Download PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {editingItem && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay no-print">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full relative">
+                            <button onClick={() => setEditingItem(null)} className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-5 h-5" /></button>
+                            <h2 className="text-2xl font-bold mb-4">Edit Item</h2>
+                            <form onSubmit={handleEditSave} className="space-y-4">
+                                <div><label className="text-xs font-bold text-slate-500">Product</label><input type="text" value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                <div><label className="text-xs font-bold text-slate-500">Customer</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-xs font-bold text-slate-500">Price</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500">Category</label><select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded">{['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                                </div>
+                                <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded font-bold">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+        );
+    }
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>
