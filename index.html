@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patil Communication - Inventory v12</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Patil Communication - Inventory v27 (Mobile Friendly)</title>
     
     <!-- React & Tailwind -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -11,44 +11,48 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- QR Scanner -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    
-    <!-- PDF & Image Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { height: 4px; width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .sort-icon::after { content: ' ↕'; opacity: 0.3; }
         .sort-asc::after { content: ' ↑'; opacity: 1; }
         .sort-desc::after { content: ' ↓'; opacity: 1; }
 
-        /* --- ANIMATION CSS --- */
-        .intro-container { background: radial-gradient(circle, #2a0a0a 0%, #000000 100%); color: #ff0000; overflow: hidden; }
-        .cube-scene { width: 150px; height: 150px; perspective: 600px; margin-bottom: 40px; }
+        /* Animation */
+        .intro-container { background: radial-gradient(circle, #1a0505 0%, #000000 100%); color: #ff0000; overflow: hidden; }
+        .cube-scene { width: 120px; height: 120px; perspective: 600px; margin-bottom: 30px; }
         .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spinCube 8s infinite linear; }
-        .cube__face { position: absolute; width: 150px; height: 150px; border: 2px solid rgba(255, 0, 0, 0.8); box-shadow: 0 0 15px rgba(255, 0, 0, 0.6), inset 0 0 20px rgba(255, 0, 0, 0.3); background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; }
-        .cube__face::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255, 0, 0, 0.3); }
-        .cube__face::after { content: ''; position: absolute; left: 50%; top: 0; height: 100%; width: 1px; background: rgba(255, 0, 0, 0.3); }
-        .cube__face--front  { transform: rotateY(  0deg) translateZ(75px); }
-        .cube__face--right  { transform: rotateY( 90deg) translateZ(75px); }
-        .cube__face--back   { transform: rotateY(180deg) translateZ(75px); }
-        .cube__face--left   { transform: rotateY(-90deg) translateZ(75px); }
-        .cube__face--top    { transform: rotateX( 90deg) translateZ(75px); }
-        .cube__face--bottom { transform: rotateX(-90deg) translateZ(75px); }
+        .cube__face { position: absolute; width: 120px; height: 120px; border: 2px solid rgba(255, 0, 0, 0.8); background: rgba(0, 0, 0, 0.8); box-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        .cube__face--front  { transform: rotateY(  0deg) translateZ(60px); }
+        .cube__face--right  { transform: rotateY( 90deg) translateZ(60px); }
+        .cube__face--back   { transform: rotateY(180deg) translateZ(60px); }
+        .cube__face--left   { transform: rotateY(-90deg) translateZ(60px); }
+        .cube__face--top    { transform: rotateX( 90deg) translateZ(60px); }
+        .cube__face--bottom { transform: rotateX(-90deg) translateZ(60px); }
         @keyframes spinCube { 0% { transform: rotateX(0deg) rotateY(0deg); } 100% { transform: rotateX(360deg) rotateY(360deg); } }
-        .text-reveal { animation: blurIn 1.5s forwards; }
-        .text-name { animation: scaleIn 0.8s forwards; text-shadow: 0 0 10px #ff0000; }
-        @keyframes blurIn { 0% { opacity: 0; filter: blur(10px); } 100% { opacity: 1; filter: blur(0); } }
-        @keyframes scaleIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-
-        /* Hide Invoice in UI, show only during generation */
+        
+        /* Mobile Input Fix to prevent zoom */
+        input, select, textarea { font-size: 16px !important; text-transform: uppercase; } 
+        
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-section, #invoice-section * { visibility: visible; }
+            #invoice-section { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
         #invoice-container { position: fixed; top: -10000px; left: -10000px; }
     </style>
 </head>
@@ -62,19 +66,12 @@
 
     // --- INTRO ---
     const IntroAnimation = ({ onComplete }) => {
-        const [showName, setShowName] = useState(false);
-        useEffect(() => {
-            const t1 = setTimeout(() => setShowName(true), 2000); 
-            const t2 = setTimeout(onComplete, 5000); 
-            return () => { clearTimeout(t1); clearTimeout(t2); };
-        }, [onComplete]);
+        useEffect(() => { const t = setTimeout(onComplete, 3000); return () => clearTimeout(t); }, [onComplete]);
         return (
             <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center intro-container">
                 <div className="cube-scene"><div className="cube"><div className="cube__face cube__face--front"></div><div className="cube__face cube__face--back"></div><div className="cube__face cube__face--right"></div><div className="cube__face cube__face--left"></div><div className="cube__face cube__face--top"></div><div className="cube__face cube__face--bottom"></div></div></div>
-                <div className="text-center space-y-4 relative h-24 w-full flex flex-col items-center justify-center">
-                    {!showName ? <h2 className="text-2xl font-light tracking-[0.5em] uppercase text-red-500 text-reveal absolute">Created By</h2> : <h1 className="text-5xl font-bold tracking-widest text-white text-name absolute">Krishna.1_6</h1>}
-                </div>
-                <div className="absolute bottom-8 text-xs text-red-800 tracking-widest uppercase opacity-60">© Copyright 2024 Krishna.1_6 | All Rights Reserved</div>
+                <h1 className="text-4xl font-bold tracking-widest text-white mt-4 animate-pulse">KRISHNA.1_6</h1>
+                <div className="absolute bottom-8 text-xs text-red-800 tracking-widest uppercase opacity-60">© 2025 All Rights Reserved</div>
             </div>
         );
     };
@@ -98,19 +95,8 @@
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
         Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
         Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
-        Camera: (props) => <Icon {...props} p={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>} />
-    };
-
-    const PRODUCT_DB = {
-        "004201": { desc: "LG MC2846SL 28L Convection Microwave Oven", code: "925600", rate: 10847.46 },
-        "033105": { desc: "LG MC 2146BG.DBKQI-Microwave Oven", code: "922000", rate: 9322.03 },
-        "076643": { desc: "LG MS3032BK 30L Solo Oven", code: "922000", rate: 9322.03 },
-        "322503": { desc: "LG 43UR75506LC 43\" LED", code: "962000", rate: 26271.19 },
-        "040409": { desc: "LG FHP1410Z5M/FL/10kg /WM", code: "983000", rate: 35169.49 },
-        "1S706":  { desc: "LG DFB532FP Dishwasher", code: "998000", rate: 41525.42 },
-        "21115":  { desc: "VIVO COMBO- N", code: "91100", rate: 550 },
-        "21116-15": { desc: "Cover (Standard)", code: "980", rate: 40 },
-        "211116": { desc: "Cover (Type B)", code: "960", rate: 30 }
+        Camera: (props) => <Icon {...props} p={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>} />,
+        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />
     };
 
     const DEFAULT_SETTINGS = {
@@ -124,22 +110,37 @@
         ifsc: "SHAHUPURI & HDFC0000164"
     };
 
+    const DEFAULT_PRODUCT_DB = {
+        "004201": { desc: "LG MC2846SL 28L Convection Microwave Oven", code: "925600", rate: 10847.46 },
+        "033105": { desc: "LG MC 2146BG.DBKQI-Microwave Oven", code: "922000", rate: 9322.03 },
+        "21115":  { desc: "VIVO COMBO- N", code: "91100", rate: 550 },
+        "21116-15": { desc: "Cover (Standard)", code: "980", rate: 40 }
+    };
+
     function App() {
         const [showIntro, setShowIntro] = useState(true);
-        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v12') || '[]'));
+        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v26') || '[]'));
         const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem('patil_settings') || JSON.stringify(DEFAULT_SETTINGS)));
+        const [customDB, setCustomDB] = useState(() => JSON.parse(localStorage.getItem('patil_custom_db') || '{}'));
         const [status, setStatus] = useState({ type: '', msg: '' });
         
+        // Navigation State
+        const [currentPage, setCurrentPage] = useState('home'); // home | admin
+
         // Workflow State
         const [workflowStep, setWorkflowStep] = useState('idle'); 
         const [currentScan, setCurrentScan] = useState(null); 
         const [editingItem, setEditingItem] = useState(null);
         const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-        const [isCameraOpen, setIsCameraOpen] = useState(false);
+        const [multipleMatches, setMultipleMatches] = useState([]);
+        const [exportModalOpen, setExportModalOpen] = useState(false);
         
         // Inputs
         const [manualDescInput, setManualDescInput] = useState("");
+        const [suggestions, setSuggestions] = useState([]);
+        
         const [productNameInput, setProductNameInput] = useState(""); 
+        const [productCodeInput, setProductCodeInput] = useState(""); 
         const [customerNameInput, setCustomerNameInput] = useState("");
         const [customerMobileInput, setCustomerMobileInput] = useState("");
         const [priceInput, setPriceInput] = useState("");
@@ -149,24 +150,36 @@
         const [invoiceItem, setInvoiceItem] = useState(null);
         const [invoiceNo, setInvoiceNo] = useState("");
 
+        // Search & Filter
         const [searchDate, setSearchDate] = useState("");
         const [searchQuery, setSearchQuery] = useState("");
         const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
+        // Export Range
+        const [exportStartDate, setExportStartDate] = useState("");
+        const [exportEndDate, setExportEndDate] = useState("");
+
+        // Admin Add Product State
+        const [newProdName, setNewProdName] = useState("");
+        const [newProdCode, setNewProdCode] = useState("");
+        const [newProdSerial, setNewProdSerial] = useState("");
+        const [newProdRate, setNewProdRate] = useState("");
+
         const inputRef = useRef(null); 
         const fileInputRef = useRef(null);
-        const scannerRef = useRef(null);
+        const dbInputRef = useRef(null); 
         const modalRefs = {
             product: useRef(null), manual: useRef(null), name: useRef(null), mobile: useRef(null), price: useRef(null), invoice: useRef(null)
         };
         const timeoutRef = useRef(null);
 
-        useEffect(() => localStorage.setItem('patil_inventory_v12', JSON.stringify(items)), [items]);
+        useEffect(() => localStorage.setItem('patil_inventory_v26', JSON.stringify(items)), [items]);
         useEffect(() => localStorage.setItem('patil_settings', JSON.stringify(settings)), [settings]);
+        useEffect(() => localStorage.setItem('patil_custom_db', JSON.stringify(customDB)), [customDB]);
 
         // Auto Focus Logic
         useEffect(() => {
-            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !isCameraOpen) {
+            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product') {
                 if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
                 if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
                 if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
@@ -174,98 +187,145 @@
                 if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50);
                 if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
             }
-            if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50);
-        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, isCameraOpen]);
+        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage]);
 
-        const handleCancel = () => {
-            setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput("");
-            setInvoiceStep('idle'); setInvoiceItem(null); setInvoiceNo(""); setIsCameraOpen(false);
-            if(inputRef.current) inputRef.current.focus();
-        };
-
-        const handleBack = () => {
-            switch (workflowStep) {
-                case 'category': setWorkflowStep('price'); break;
-                case 'price': setWorkflowStep('customer_mobile'); break;
-                case 'customer_mobile': setWorkflowStep('customer_name'); break;
-                case 'customer_name': 
-                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc');
-                    else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name');
-                    else handleCancel(); 
-                    break;
-                case 'manual_desc':
-                case 'product_name': handleCancel(); break;
-                default: handleCancel();
-            }
-        };
-
-        // --- CAMERA SCAN ---
-        const startLiveScan = () => {
-            setIsCameraOpen(true);
-            setTimeout(() => {
-                const html5QrCode = new Html5Qrcode("reader-live");
-                scannerRef.current = html5QrCode;
-                html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
-                    (decodedText) => {
-                        handleScan(decodedText);
-                        stopLiveScan();
-                    },
-                    (errorMessage) => { }
-                ).catch(err => {
-                    setStatus({ type: 'error', msg: 'Camera Error: ' + err });
-                    setIsCameraOpen(false);
-                });
-            }, 100);
-        };
-
-        const stopLiveScan = () => {
-            if (scannerRef.current) {
-                scannerRef.current.stop().then(() => {
-                    scannerRef.current.clear();
-                    setIsCameraOpen(false);
-                }).catch(err => setIsCameraOpen(false));
-            } else {
-                setIsCameraOpen(false);
-            }
-        };
-
-        // --- SCAN LOGIC ---
+        // --- CORE SCAN LOGIC ---
         const handleScan = (code) => {
             if(!code) return;
-            if (code.includes(',')) {
-                const clean = (s) => s.replace(/^(Prod|Product|Name|SrNo|SN|Serial|Code|Item|Price|Rate|MRP)[\s.:-]+/i, "").trim();
-                const parts = code.split(',').map(s => s.trim());
-                if (parts.length >= 3) {
-                    const price = parts.length > 3 ? (parseFloat(clean(parts[3]).replace(/[^\d.]/g, '')) || 0) : 0;
-                    setCurrentScan({ desc: clean(parts[0]), code: clean(parts[2]), srNo: clean(parts[1]), rate: price, customerName: "", entryMethod: 'scan' });
+            const upCode = code.toUpperCase();
+            
+            // 1. Structured QR
+            if (upCode.includes(',')) {
+                const clean = (s) => s.replace(/^(PROD|PRODUCT|NAME|SRNO|SN|SERIAL|CODE|ITEM|PRICE|RATE|MRP)[\s.:-]+/i, "").trim();
+                const parts = upCode.split(',').map(s => s.trim());
+                if (parts.length >= 2) {
+                     const price = parts.length > 3 ? (parseFloat(clean(parts[3]).replace(/[^\d.]/g, '')) || 0) : 0;
+                     setCurrentScan({ 
+                        desc: clean(parts[0]), 
+                        code: parts[2] ? clean(parts[2]) : "N/A", 
+                        srNo: clean(parts[1]), 
+                        rate: price, 
+                        customerName: "", 
+                        entryMethod: 'scan' 
+                    });
                     setPriceInput((price && !isNaN(price)) ? price.toString() : ""); 
                     setCustomerNameInput(""); setWorkflowStep('customer_name'); 
                     if(inputRef.current) inputRef.current.value = ""; return;
                 }
             }
-            const product = PRODUCT_DB[code];
-            if (product) {
-                setCurrentScan({ ...product, srNo: code, customerName: "", entryMethod: 'scan' });
+            
+            // 2. Lookup DB
+            let matches = [];
+            if (customDB[upCode]) matches = Array.isArray(customDB[upCode]) ? customDB[upCode] : [customDB[upCode]];
+            else if (PRODUCT_DB[upCode]) matches = [PRODUCT_DB[upCode]];
+
+            if (matches.length > 1) {
+                setMultipleMatches(matches.map(m => ({ ...m, srNo: upCode })));
+                setWorkflowStep('select_product');
+            } else if (matches.length === 1) {
+                const product = matches[0];
+                setCurrentScan({ desc: product.desc, code: product.code || upCode, srNo: upCode, rate: product.rate || 0, customerName: "", entryMethod: 'scan' });
                 setPriceInput(product.rate > 0 ? product.rate.toString() : ""); 
                 setCustomerNameInput(""); setWorkflowStep('customer_name');
             } else {
-                setCurrentScan({ code: code, srNo: code, rate: 0, customerName: "", entryMethod: 'unknown' });
-                const looksLikeName = isNaN(code) && code.length > 3;
-                setProductNameInput(looksLikeName ? code : ""); setWorkflowStep('product_name');
+                // Unknown
+                setCurrentScan({ code: "UNKNOWN", srNo: upCode, rate: 0, customerName: "", entryMethod: 'unknown' });
+                setProductNameInput(""); 
+                setProductCodeInput(""); 
+                setWorkflowStep('product_name');
             }
             if(inputRef.current) inputRef.current.value = "";
         };
 
-        // --- HANDLERS ---
-        const startManualEntry = () => { setManualDescInput(""); setWorkflowStep('manual_desc'); };
-        const handleManualDescSubmit = (e) => { e.preventDefault(); const desc = manualDescInput.trim() || "Manual Item / Repair"; setCurrentScan({ desc: desc, code: "MANUAL", srNo: "-", rate: 0, customerName: "", entryMethod: 'manual' }); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
-        const handleProductNameSubmit = (e) => { e.preventDefault(); const name = productNameInput.trim() || "Unknown Item"; setCurrentScan(prev => ({ ...prev, desc: name })); setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
-        const handleCustomerNameSubmit = (e) => { e.preventDefault(); const name = customerNameInput.trim(); if(name) { setCurrentScan(prev => ({ ...prev, tempName: name })); setCustomerMobileInput(""); setWorkflowStep('customer_mobile'); } else { handleCustomerSkip(); } };
+        const handleProductSelection = (product) => {
+            setCurrentScan({ desc: product.desc, code: product.code, srNo: product.srNo || "N/A", rate: product.rate, customerName: "", entryMethod: 'scan' });
+            setPriceInput(product.rate > 0 ? product.rate.toString() : "");
+            setCustomerNameInput("");
+            setWorkflowStep('customer_name');
+        };
+
+        // --- MANUAL ENTRY WORKFLOW ---
+        const startManualEntry = () => { setManualDescInput(""); setSuggestions([]); setWorkflowStep('manual_desc'); };
+        
+        const handleManualInputChange = (e) => {
+            const val = e.target.value.toUpperCase();
+            setManualDescInput(val);
+            if (val.length > 1) {
+                const matches = Object.entries(customDB).filter(([key, p]) => {
+                    const arr = Array.isArray(p) ? p : [p];
+                    return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val));
+                }).slice(0, 8).map(([key, val]) => {
+                     const item = Array.isArray(val) ? val[0] : val;
+                     return { ...item, barcode: key };
+                });
+                setSuggestions(matches);
+            } else { setSuggestions([]); }
+        };
+
+        const selectSuggestion = (product) => {
+            setCurrentScan({ 
+                desc: product.desc, code: product.code, srNo: product.barcode, rate: product.rate, customerName: "", entryMethod: 'manual' 
+            });
+            setPriceInput(product.rate > 0 ? product.rate.toString() : "");
+            setCustomerNameInput(""); setSuggestions([]); setWorkflowStep('customer_name');
+        };
+
+        const handleManualDescSubmit = (e) => { 
+            e.preventDefault(); 
+            // If unknown/manual, treat like new product flow
+            setCurrentScan({ desc: manualDescInput.trim() || "MANUAL ITEM", rate: 0, customerName: "", entryMethod: 'manual' });
+            setProductNameInput(manualDescInput.trim()); // Carry over name
+            setProductCodeInput(""); // Clear code
+            setWorkflowStep('product_name'); // Use same unknown flow to ask code/serial
+        };
+
+        // --- GENERAL FORM HANDLERS ---
+        // Updated to save to Custom DB if unknown
+        const handleProductNameSubmit = (e) => { 
+            e.preventDefault(); 
+            const name = productNameInput.trim().toUpperCase() || "UNKNOWN"; 
+            const code = productCodeInput.trim().toUpperCase() || "N/A";
+            
+            // Update current scan
+            setCurrentScan(prev => ({ ...prev, desc: name, code: code })); 
+            
+            // SAVE TO DB FOR FUTURE
+            if(currentScan.srNo && currentScan.srNo !== "MANUAL") {
+                const newEntry = { desc: name, code: code, rate: 0 }; // Price updated later
+                const key = currentScan.srNo;
+                const newDB = { ...customDB };
+                if (newDB[key]) {
+                    if (Array.isArray(newDB[key])) newDB[key].push(newEntry);
+                    else newDB[key] = [newDB[key], newEntry];
+                } else {
+                    newDB[key] = [newEntry];
+                }
+                setCustomDB(newDB);
+            }
+
+            setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); 
+        };
+
+        const handleCustomerNameSubmit = (e) => { e.preventDefault(); const name = customerNameInput.trim().toUpperCase(); if(name) { setCurrentScan(prev => ({ ...prev, tempName: name })); setCustomerMobileInput(""); setWorkflowStep('customer_mobile'); } else { handleCustomerSkip(); } };
         const handleCustomerSkip = () => { setCurrentScan(prev => ({ ...prev, customerName: "" })); setWorkflowStep('price'); };
         const handleCustomerMobileSubmit = (e) => { e.preventDefault(); const mobile = customerMobileInput.trim(); const name = currentScan.tempName; const fullName = mobile ? `${name} (${mobile})` : name; setCurrentScan(prev => ({ ...prev, customerName: fullName })); setWorkflowStep('price'); };
-        const handlePriceSubmit = (e) => { e.preventDefault(); const price = parseFloat(priceInput); if (!price || isNaN(price)) { alert("Invalid price"); return; } setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); };
+        
+        const handlePriceSubmit = (e) => { 
+            e.preventDefault(); 
+            const price = parseFloat(priceInput); 
+            if (!price || isNaN(price)) { alert("Invalid price"); return; } 
+            
+            // Update rate in DB if we just added it
+            if(currentScan.srNo && currentScan.entryMethod === 'unknown' && customDB[currentScan.srNo]) {
+                const newDB = { ...customDB };
+                const arr = newDB[currentScan.srNo];
+                // Update the last added item's rate
+                if(arr && arr.length > 0) arr[arr.length-1].rate = price;
+                setCustomDB(newDB);
+            }
+
+            setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); 
+        };
 
         const handleCategorySelect = (categoryKey) => {
             if (!currentScan) return;
@@ -276,321 +336,325 @@
                 dateTime: `${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
                 rawDate: now.toISOString().split('T')[0],
                 desc: currentScan.desc, code: currentScan.code, srNo: currentScan.srNo, customer: currentScan.customerName || "-", 
-                gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-",
-                invoiceNo: "" // Start empty, save later
+                gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-", invoiceNo: ""
             };
             newItem[categoryKey] = price;
             setItems(prev => [newItem, ...prev]);
-            setStatus({ type: 'success', msg: `Saved to ${categoryKey}`, showPrint: false }); 
+            setStatus({ type: 'success', msg: `Saved to ${categoryKey.toUpperCase()}` }); 
             handleCancel(); 
         };
 
-        // --- INVOICE LOGIC ---
-        const handleRowPrint = (item) => {
-            setInvoiceItem(item);
-            setInvoiceNo(item.invoiceNo || ""); // Pre-fill if exists
-            setInvoiceStep('input_no');
+        const handleCancel = () => {
+            setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput("");
+            setInvoiceStep('idle'); setInvoiceItem(null); setInvoiceNo(""); setExportModalOpen(false); setMultipleMatches([]);
+            if(inputRef.current) inputRef.current.focus();
         };
 
-        const handleInvoiceNoSubmit = (e) => {
-            e.preventDefault();
-            // Update item with invoice number so it's remembered
-            const updatedItem = { ...invoiceItem, invoiceNo: invoiceNo };
-            setInvoiceItem(updatedItem);
-            
-            setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
-            setInvoiceStep('select_format');
-        };
-
-        const handleInvoiceSkip = () => {
-            setInvoiceNo(""); 
-            setInvoiceStep('select_format');
-        };
-
-        const handleDownload = async (type) => {
-            const invoiceElement = document.getElementById('invoice-section');
-            if(!invoiceElement) return;
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            if (type === 'image') {
-                const canvas = await html2canvas(invoiceElement, { scale: 2 });
-                const link = document.createElement('a');
-                link.download = `Invoice_${invoiceItem.id}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg');
-                link.click();
-            } else {
-                const canvas = await html2canvas(invoiceElement, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`Invoice_${invoiceItem.id}.pdf`);
-            }
-            handleCancel(); 
-        };
-
-        const numberToWords = (price) => {
-            const num = parseInt(price);
-            if (num === 0) return "Zero Only";
-            return `INR ${num} Only`; 
-        };
-
-        // --- EDIT LOGIC ---
-        const handleEditClick = (item) => {
-            const categories = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'];
-            const activeCat = categories.find(c => item[c] !== "-") || 'gkCash';
-            const price = item[activeCat] === "-" ? "0" : item[activeCat];
-            setEditingItem({ 
-                ...item, 
-                currentCategory: activeCat, 
-                currentPrice: price,
-                editDate: item.dateTime.split(' ')[0], 
-                editTime: item.dateTime.split(' ')[1] 
-            });
-        };
-        const handleEditSave = (e) => {
-            e.preventDefault();
-            const { id, currentCategory, currentPrice, editDate, editTime } = editingItem;
-            setItems(prev => prev.map(it => {
-                if (it.id === id) {
-                    const updated = { ...editingItem };
-                    ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => updated[c] = "-");
-                    updated[currentCategory] = parseFloat(currentPrice).toFixed(2);
-                    delete updated.currentCategory; delete updated.currentPrice; delete updated.editDate; delete updated.editTime; 
-                    return updated;
-                } return it;
-            }));
-            setEditingItem(null); setStatus({ type: 'success', msg: 'Item Updated' }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
-        };
-
-        const handleDeleteFromEdit = () => {
-            if(confirm("Permanently delete this entry?")) {
-                setItems(prev => prev.filter(i => i.id !== editingItem.id));
-                setEditingItem(null);
+        const handleBack = () => {
+            switch (workflowStep) {
+                case 'category': setWorkflowStep('price'); break;
+                case 'price': setWorkflowStep('customer_mobile'); break;
+                case 'customer_mobile': setWorkflowStep('customer_name'); break;
+                case 'customer_name': 
+                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('product_name');
+                    else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name');
+                    else handleCancel(); 
+                    break;
+                case 'product_name':
+                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc');
+                    else handleCancel();
+                    break;
+                case 'manual_desc':
+                case 'select_product': handleCancel(); break;
+                default: handleCancel();
             }
         };
 
-        const handlePrintFromEdit = () => {
-            const itemToPrint = items.find(i => i.id === editingItem.id);
-            setEditingItem(null);
-            handleRowPrint(itemToPrint);
+        // --- SCAN INPUT ---
+        const handleScanInput = (e) => { const val = e.target.value.toUpperCase(); if (timeoutRef.current) clearTimeout(timeoutRef.current); timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300); };
+        const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim().toUpperCase());
+        
+        // --- IMAGE UPLOAD ---
+        const handleImageUpload = (e) => { 
+            const file = e.target.files[0]; if (!file) return; 
+            const html5QrCode = new Html5Qrcode("reader-hidden"); setStatus({ type: 'info', msg: 'Scanning Image...' }); 
+            html5QrCode.scanFile(file, true).then(decodedText => handleScan(decodedText.toUpperCase())).catch(() => setStatus({ type: 'error', msg: 'No code found' })); e.target.value = ''; 
         };
 
-        // --- RENDER HELPERS ---
-        const filteredItems = useMemo(() => {
-            let data = items.filter(item => {
-                const matchesDate = searchDate ? item.rawDate === searchDate : true;
-                const query = searchQuery.toLowerCase();
-                return matchesDate && (searchQuery ? JSON.stringify(item).toLowerCase().includes(query) : true);
-            });
-            if (sortConfig.key) {
-                data.sort((a, b) => {
-                    let valA = parseFloat(a[sortConfig.key]) || 0; let valB = parseFloat(b[sortConfig.key]) || 0;
-                    return sortConfig.direction === 'ascending' ? valA - valB : valB - valA;
+        // --- EXPORT LOGIC ---
+        const handleExportClick = () => setExportModalOpen(true);
+        const exportData = (dataSubset) => {
+            if (dataSubset.length === 0) { alert("No data to export for selected range."); return; }
+            const headers = ["Date & Time", "Customer", "Product", "Code", "Sr. No", "GK Cash", "GK Bank", "UN GST Cash", "UN Non GST Cash", "UN 1 A/C", "UN 2 A/C"];
+            const rows = dataSubset.map(i => [`"${i.dateTime}"`, `"${i.customer}"`, `"${i.desc}"`, i.code, i.srNo, i.gkCash, i.gkBank, i.unGstCash, i.unNonGstCash, i.un1ac, i.un2ac]);
+            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+            const b = new Blob([csv], { type: 'text/csv' }); const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `INVENTORY_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; document.body.appendChild(l); l.click(); document.body.removeChild(l);
+            setExportModalOpen(false);
+        };
+        const exportToday = () => {
+            const today = new Date().toISOString().split('T')[0];
+            const subset = items.filter(i => i.rawDate === today);
+            exportData(subset);
+        };
+        const exportRange = () => {
+            if(!exportStartDate || !exportEndDate) { alert("Select both dates"); return; }
+            const subset = items.filter(i => i.rawDate >= exportStartDate && i.rawDate <= exportEndDate);
+            exportData(subset);
+        };
+
+        // --- DB IMPORT ---
+        const handleDbImport = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = event.target.result;
+                let rows = [];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) { const wb = XLSX.read(data, { type: 'binary' }); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); } else { rows = Papa.parse(data, { header: false }).data; }
+                
+                const newEntries = { ...customDB };
+                let count = 0;
+                let nameIdx=0, snIdx=1, codeIdx=2, rateIdx=3;
+                if (rows.length > 0) {
+                    const h = rows[0].map(c => c ? c.toString().toLowerCase() : "");
+                    h.forEach((val, i) => { if(val.includes("name")||val.includes("particular")||val.includes("desc")) nameIdx=i; if(val.includes("serial")||val.includes("sr")||val.includes("barcode")) snIdx=i; if(val.includes("code")) codeIdx=i; if(val.includes("rate")||val.includes("mrp")||val.includes("price")) rateIdx=i; });
+                }
+                rows.forEach((row, i) => {
+                    if (i===0) return;
+                    if (row.length>1) {
+                        const barcode = row[snIdx]?.toString().trim().toUpperCase();
+                        const name = row[nameIdx]?.toString().trim().toUpperCase();
+                        const code = row[codeIdx]?.toString().trim().toUpperCase() || "";
+                        const rate = parseFloat(row[rateIdx]) || 0;
+                        if (barcode && name) {
+                            const p = { desc: name, code, rate };
+                            if(newEntries[barcode]) { if(Array.isArray(newEntries[barcode])) newEntries[barcode].push(p); else newEntries[barcode] = [newEntries[barcode], p]; } else { newEntries[barcode] = [p]; }
+                            count++;
+                        }
+                    }
                 });
+                setCustomDB(newEntries); setStatus({ type: 'success', msg: `Imported ${count} Items` }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+            };
+            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) reader.readAsBinaryString(file); else reader.readAsText(file); e.target.value = '';
+        };
+
+        // --- ADMIN: ADD PRODUCT ---
+        const handleAdminAddProduct = (e) => {
+            e.preventDefault();
+            const name = newProdName.trim().toUpperCase();
+            const code = newProdCode.trim().toUpperCase();
+            const serial = newProdSerial.trim().toUpperCase();
+            const rate = parseFloat(newProdRate) || 0;
+
+            if (!name || !serial) { alert("Name and Serial are required"); return; }
+
+            const newDB = { ...customDB };
+            const product = { desc: name, code, rate };
+            
+            if (newDB[serial]) {
+                if (Array.isArray(newDB[serial])) newDB[serial].push(product);
+                else newDB[serial] = [newDB[serial], product];
+            } else {
+                newDB[serial] = [product];
             }
-            return data;
-        }, [items, searchDate, searchQuery, sortConfig]);
+            
+            setCustomDB(newDB);
+            setNewProdName(""); setNewProdCode(""); setNewProdSerial(""); setNewProdRate("");
+            setStatus({ type: 'success', msg: 'Product Added to Stock!' });
+            setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+        };
 
-        const totalSales = useMemo(() => filteredItems.reduce((acc, item) => {
-            const val = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(item[k]) || 0).reduce((a, b) => a + b, 0);
-            return acc + val;
-        }, 0), [filteredItems]);
+        const handleDownloadStock = () => {
+            // Flatten DB for export
+            const rows = [];
+            rows.push(["Serial/Barcode", "Product Name", "Item Code", "Rate"]);
+            Object.entries(customDB).forEach(([key, val]) => {
+                const arr = Array.isArray(val) ? val : [val];
+                arr.forEach(p => rows.push([key, p.desc, p.code, p.rate]));
+            });
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, "Stock");
+            XLSX.writeFile(wb, "Patil_Stock_Backup.xlsx");
+        };
 
+        // --- HELPERS ---
+        const handleRowPrint = (item) => { setInvoiceItem(item); setInvoiceNo(item.invoiceNo || ""); setInvoiceStep('input_no'); };
+        const handleInvoiceNoSubmit = (e) => { e.preventDefault(); const u = { ...invoiceItem, invoiceNo: invoiceNo.toUpperCase() }; setInvoiceItem(u); setItems(prev => prev.map(i => i.id === u.id ? u : i)); setInvoiceStep('select_format'); };
+        const handleInvoiceSkip = () => { setInvoiceNo(""); setInvoiceStep('select_format'); };
+        const handleDownload = async (type) => { const el = document.getElementById('invoice-section'); if(!el) return; await new Promise(r => setTimeout(r, 100)); if(type === 'image'){ const c = await html2canvas(el, { scale: 2 }); const l = document.createElement('a'); l.download = `INV_${invoiceItem.id}.jpg`; l.href = c.toDataURL('image/jpeg'); l.click(); } else { const c = await html2canvas(el, { scale: 2 }); const img = c.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const w = pdf.internal.pageSize.getWidth(); const h = (c.height * w) / c.width; pdf.addImage(img, 'PNG', 0, 0, w, h); pdf.save(`INV_${invoiceItem.id}.pdf`); } handleCancel(); };
+        const numberToWords = (price) => { const num = parseInt(price); if (num === 0) return "Zero Only"; return `INR ${num} Only`; };
+        const handleEditClick = (item) => { const cats = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac']; const cat = cats.find(c => item[c] !== "-") || 'gkCash'; const [dp, tp] = item.dateTime.split(' '); const [d, m, y] = dp.split('/'); setEditingItem({ ...item, currentCategory: cat, currentPrice: item[cat] === "-" ? "0" : item[cat], editDate: `${y}-${m}-${d}`, editTime: tp }); };
+        const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); setItems(prev => prev.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; })); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
+        const handleDeleteFromEdit = () => { if(confirm("Delete?")) { setItems(prev => prev.filter(i => i.id !== editingItem.id)); setEditingItem(null); } };
+        const handlePrintFromEdit = () => { const itemToPrint = items.find(i => i.id === editingItem.id); setEditingItem(null); handleRowPrint(itemToPrint); };
+        
+        // --- SEARCH FOR EDIT ---
+        const [editSuggestions, setEditSuggestions] = useState([]);
+        const handleEditSearchChange = (e) => {
+            const val = e.target.value.toUpperCase();
+            setEditingItem(prev => ({ ...prev, desc: val }));
+            if (val.length > 1) {
+                const matches = Object.entries(customDB).filter(([key, p]) => {
+                    const arr = Array.isArray(p) ? p : [p];
+                    return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val));
+                }).slice(0, 8).map(([key, val]) => {
+                     const item = Array.isArray(val) ? val[0] : val;
+                     return { ...item, barcode: key };
+                });
+                setEditSuggestions(matches);
+            } else { setEditSuggestions([]); }
+        };
+        const applyEditProduct = (product) => {
+             setEditingItem(prev => ({
+                ...prev,
+                desc: product.desc,
+                code: product.code || prev.code,
+                srNo: product.barcode || prev.srNo,
+                currentPrice: product.rate || prev.currentPrice
+            }));
+            setEditSuggestions([]);
+        };
+
+
+        const filteredItems = useMemo(() => { let d = items.filter(i => { const md = searchDate ? i.rawDate === searchDate : true; const q = searchQuery.toUpperCase(); return md && (searchQuery ? JSON.stringify(i).toUpperCase().includes(q) : true); }); if (sortConfig.key) { d.sort((a, b) => { let va = parseFloat(a[sortConfig.key]) || 0; let vb = parseFloat(b[sortConfig.key]) || 0; return sortConfig.direction === 'ascending' ? va - valB : vb - valA; }); } return d; }, [items, searchDate, searchQuery, sortConfig]);
+        const totalSales = useMemo(() => filteredItems.reduce((acc, i) => { const v = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(i[k]) || 0).reduce((a, b) => a + b, 0); return acc + v; }, 0), [filteredItems]);
         const requestSort = (key) => setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'ascending' ? 'descending' : 'ascending' });
         const getSortClass = (key) => sortConfig.key === key ? (sortConfig.direction === 'ascending' ? 'sort-asc' : 'sort-desc') : 'sort-icon';
 
-        const handleScanInput = (e) => {
-            const val = e.target.value;
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300);
-        };
-        const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim());
-        const handleImageUpload = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            const html5QrCode = new Html5Qrcode("reader-hidden"); setStatus({ type: 'info', msg: 'Scanning...' });
-            html5QrCode.scanFile(file, true).then(handleScan).catch(() => setStatus({ type: 'error', msg: 'No code found' })); e.target.value = '';
-        };
-
         if (showIntro) return <IntroAnimation onComplete={() => setShowIntro(false)} />;
 
-        return (
-            <div className="min-h-screen font-sans text-slate-800 p-4 md:p-8 bg-slate-50 relative">
-                
-                {/* --- HIDDEN INVOICE TEMPLATE --- */}
-                {invoiceItem && (
-                    <div id="invoice-container">
-                        <div id="invoice-section" className="w-[210mm] bg-white p-8 text-black relative">
-                            <div className="text-center font-bold text-xs uppercase mb-2 border-b pb-2">Subject to Kolhapur Jurisdiction</div>
-                            <div className="flex justify-between items-start mb-6">
-                                <div><div className="text-sm font-bold">Invoice No. {invoiceNo || "_______"}</div></div>
-                                <div className="text-center">
-                                    <h1 className="text-xl font-bold uppercase">{settings.name}</h1>
-                                    <p className="text-xs whitespace-pre-line">{settings.address}</p>
-                                    <p className="text-xs font-bold mt-1">Contact: {settings.contact}</p>
-                                    <p className="text-xs">GSTIN/UIN: {settings.gstin}</p>
-                                    <p className="text-xs">Email: {settings.email}</p>
-                                </div>
-                                <div className="text-right text-sm">Dated: {new Date().toLocaleDateString()}</div>
+        if (currentPage === 'admin') {
+            return (
+                <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-3xl font-bold text-slate-800">ADMIN PANEL</h1>
+                            <button onClick={() => setCurrentPage('home')} className="bg-slate-600 text-white px-4 py-2 rounded-lg font-bold uppercase hover:bg-slate-700">Back</button>
+                        </div>
+                        
+                        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                            <h2 className="text-xl font-bold mb-4 border-b pb-2">ADD NEW STOCK</h2>
+                            <form onSubmit={handleAdminAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" placeholder="SERIAL NO / BARCODE" className="border p-2 rounded uppercase" value={newProdSerial} onChange={e => setNewProdSerial(e.target.value.toUpperCase())} />
+                                <input type="text" placeholder="PRODUCT NAME" className="border p-2 rounded uppercase" value={newProdName} onChange={e => setNewProdName(e.target.value.toUpperCase())} />
+                                <input type="text" placeholder="ITEM CODE (OPTIONAL)" className="border p-2 rounded uppercase" value={newProdCode} onChange={e => setNewProdCode(e.target.value.toUpperCase())} />
+                                <input type="number" placeholder="RATE (OPTIONAL)" className="border p-2 rounded" value={newProdRate} onChange={e => setNewProdRate(e.target.value)} />
+                                <button type="submit" className="bg-green-600 text-white font-bold py-2 rounded md:col-span-2 hover:bg-green-700">ADD TO DATABASE</button>
+                            </form>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">CURRENT STOCK ({Object.keys(customDB).length} Items)</h2>
+                                <button onClick={handleDownloadStock} className="bg-blue-100 text-blue-700 px-3 py-1 rounded font-bold text-xs uppercase hover:bg-blue-200">Download Updated Stock</button>
                             </div>
-                            <h2 className="text-center font-bold text-lg mb-4 underline">TAX INVOICE</h2>
-                            <div className="mb-4">
-                                <p className="font-bold">Party : {invoiceItem.customer}</p>
-                                <p className="text-sm">State Name : Maharashtra, Code : 27</p>
+                            <div className="overflow-x-auto max-h-96">
+                                <table className="w-full text-left border-collapse text-sm">
+                                    <thead><tr className="bg-slate-100"><th className="p-2 border">SERIAL</th><th className="p-2 border">PRODUCT</th><th className="p-2 border">CODE</th><th className="p-2 border">RATE</th></tr></thead>
+                                    <tbody>
+                                        {Object.entries(customDB).slice(0, 100).map(([key, val], idx) => {
+                                            const arr = Array.isArray(val) ? val : [val];
+                                            return arr.map((p, i) => (
+                                                <tr key={`${idx}-${i}`} className="border-b">
+                                                    <td className="p-2 font-mono text-xs">{key}</td>
+                                                    <td className="p-2">{p.desc}</td>
+                                                    <td className="p-2">{p.code}</td>
+                                                    <td className="p-2">₹{p.rate}</td>
+                                                </tr>
+                                            ));
+                                        })}
+                                    </tbody>
+                                </table>
+                                <p className="text-xs text-slate-400 mt-2 text-center">Showing first 100 items...</p>
                             </div>
-                            <table className="w-full border-collapse border border-black text-xs mb-4">
-                                <thead>
-                                    <tr className="bg-gray-100">
-                                        <th className="border border-black p-1 w-10">Sl No.</th>
-                                        <th className="border border-black p-1">Description of Goods</th>
-                                        <th className="border border-black p-1 w-16">HSN/SAC</th>
-                                        <th className="border border-black p-1 w-16">Quantity</th>
-                                        <th className="border border-black p-1 w-20">Rate</th>
-                                        <th className="border border-black p-1 w-12">per</th>
-                                        <th className="border border-black p-1 w-24">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td className="border border-black p-1 text-center">1</td>
-                                        <td className="border border-black p-1 font-bold">
-                                            {invoiceItem.desc}<br/>
-                                            <span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo} | Code: {invoiceItem.code}</span>
-                                            <div className="mt-4 text-right pr-4">CGST 9%</div>
-                                            <div className="text-right pr-4">SGST 9%</div>
-                                        </td>
-                                        <td className="border border-black p-1 text-center">8517</td>
-                                        <td className="border border-black p-1 text-center font-bold">1 Nos</td>
-                                        <td className="border border-black p-1 text-right">
-                                            {(() => {
-                                                const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0);
-                                                return (total/1.18).toFixed(2);
-                                            })()}
-                                        </td>
-                                        <td className="border border-black p-1 text-center">Nos</td>
-                                        <td className="border border-black p-1 text-right font-bold align-top">
-                                            {(() => {
-                                                const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0);
-                                                const basic = total/1.18;
-                                                const tax = total - basic;
-                                                const halfTax = tax/2;
-                                                return (
-                                                    <>
-                                                        <div>{basic.toFixed(2)}</div>
-                                                        <div className="mt-4">{halfTax.toFixed(2)}</div>
-                                                        <div>{halfTax.toFixed(2)}</div>
-                                                    </>
-                                                );
-                                            })()}
-                                        </td>
-                                    </tr>
-                                    <tr className="font-bold">
-                                        <td colSpan="3" className="border border-black p-1 text-right">Total</td>
-                                        <td className="border border-black p-1 text-center">1 Nos</td>
-                                        <td colSpan="2" className="border border-black p-1"></td>
-                                        <td className="border border-black p-1 text-right">
-                                            ₹ {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0).toFixed(2)}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div className="border border-black p-2 text-xs mb-2">
-                                <span className="font-bold">Amount Chargeable (in words):</span> <br/>
-                                <span className="font-bold text-sm uppercase">{numberToWords(['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0))}</span>
-                            </div>
-                            <div className="flex text-xs mb-4">
-                                <div className="w-1/2 border border-black p-2 mr-2">
-                                    <p className="font-bold underline mb-1">Company's Bank Details</p>
-                                    <p>Bank Name : {settings.bankName}</p>
-                                    <p>A/c No. : {settings.acNo}</p>
-                                    <p>Branch & IFS Code : {settings.ifsc}</p>
-                                </div>
-                                <div className="w-1/2 border border-black p-2 flex flex-col justify-between text-right">
-                                    <p className="font-bold">for {settings.name}</p>
-                                    <br/><br/>
-                                    <p>Authorised Signatory</p>
-                                </div>
-                            </div>
-                            <div className="text-[10px]">
-                                <p className="font-bold underline">Declaration</p>
-                                <ol className="list-decimal pl-4">
-                                    <li>Goods once sold will not be taken back.</li>
-                                    <li>Interest @ 24% p.a. will be charged if payment is not made within due date.</li>
-                                    <li>Subject to Kolhapur Jurisdiction only.</li>
-                                </ol>
-                            </div>
-                            <div className="text-center border-t mt-4 pt-1 text-[10px]">This is a Computer Generated Invoice</div>
                         </div>
                     </div>
-                )}
+                    {status.msg && <div className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded shadow-lg">{status.msg}</div>}
+                </div>
+            );
+        }
 
-                {/* --- HEADER --- */}
-                <header className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
-                    <div><h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2"><Icons.Package className="w-8 h-8 text-blue-600" />{settings.name}</h1><p className="text-slate-500">Inventory System v12.0</p></div>
-                    <div className="flex gap-4 items-center">
-                         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[100px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Items</div><div className="text-xl font-bold text-slate-700">{filteredItems.length}</div></div>
-                        <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 text-right min-w-[140px]"><div className="text-xs text-slate-400 font-bold uppercase">Total Sales</div><div className="text-xl font-bold text-green-600">₹{totalSales.toFixed(2)}</div></div>
-                        <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-200 rounded-full hover:bg-slate-300 text-slate-600"><Icons.Settings className="w-6 h-6" /></button>
+        return (
+            <div className="min-h-screen font-sans text-slate-800 p-2 md:p-8 bg-slate-50 relative uppercase">
+                
+                {/* Invoice Hidden Template */}
+                {invoiceItem && (<div id="invoice-container"><div id="invoice-section" className="w-[210mm] bg-white p-8 text-black relative"><div className="text-center font-bold text-xs uppercase mb-2 border-b pb-2">Subject to Kolhapur Jurisdiction</div><div className="flex justify-between items-start mb-6"><div><div className="text-sm font-bold">Invoice No. {invoiceNo || "_______"}</div></div><div className="text-center"><h1 className="text-xl font-bold uppercase">{settings.name}</h1><p className="text-xs whitespace-pre-line">{settings.address}</p><p className="text-xs font-bold mt-1">Contact: {settings.contact}</p><p className="text-xs">GSTIN/UIN: {settings.gstin}</p><p className="text-xs">Email: {settings.email}</p></div><div className="text-right text-sm">Dated: {new Date().toLocaleDateString()}</div></div><h2 className="text-center font-bold text-lg mb-4 underline">TAX INVOICE</h2><div className="mb-4"><p className="font-bold">Party : {invoiceItem.customer}</p><p className="text-sm">State Name : Maharashtra, Code : 27</p></div><table className="w-full border-collapse border border-black text-xs mb-4"><thead><tr className="bg-gray-100"><th className="border border-black p-1 w-10">Sl</th><th className="border border-black p-1">Description</th><th className="border border-black p-1 w-16">HSN</th><th className="border border-black p-1 w-16">Qty</th><th className="border border-black p-1 w-20">Rate</th><th className="border border-black p-1 w-12">per</th><th className="border border-black p-1 w-24">Amount</th></tr></thead><tbody><tr><td className="border border-black p-1 text-center">1</td><td className="border border-black p-1 font-bold">{invoiceItem.desc}<br/><span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo} | Code: {invoiceItem.code}</span><div className="mt-4 text-right pr-4">CGST 9%</div><div className="text-right pr-4">SGST 9%</div></td><td className="border border-black p-1 text-center">8517</td><td className="border border-black p-1 text-center font-bold">1 Nos</td><td className="border border-black p-1 text-right">{(() => { const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0); return (total/1.18).toFixed(2); })()}</td><td className="border border-black p-1 text-center">Nos</td><td className="border border-black p-1 text-right font-bold align-top">{(() => { const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0); const basic = total/1.18; const tax = total - basic; const halfTax = tax/2; return (<><div>{basic.toFixed(2)}</div><div className="mt-4">{halfTax.toFixed(2)}</div><div>{halfTax.toFixed(2)}</div></>); })()}</td></tr><tr className="font-bold"><td colSpan="3" className="border border-black p-1 text-right">Total</td><td className="border border-black p-1 text-center">1 Nos</td><td colSpan="2" className="border border-black p-1"></td><td className="border border-black p-1 text-right">₹ {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0).toFixed(2)}</td></tr></tbody></table><div className="border border-black p-2 text-xs mb-2"><span className="font-bold">Amount Chargeable (in words):</span> <br/><span className="font-bold text-sm uppercase">{numberToWords(['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0))}</span></div><div className="flex text-xs mb-4"><div className="w-1/2 border border-black p-2 mr-2"><p className="font-bold underline mb-1">Company's Bank Details</p><p>Bank Name : {settings.bankName}</p><p>A/c No. : {settings.acNo}</p><p>Branch & IFS : {settings.ifsc}</p></div><div className="w-1/2 border border-black p-2 flex flex-col justify-between text-right"><p className="font-bold">for {settings.name}</p><br/><br/><p>Authorised Signatory</p></div></div><div className="text-[10px]"><p className="font-bold underline">Declaration</p><ol className="list-decimal pl-4"><li>Goods once sold will not be taken back.</li><li>Interest @ 24% p.a. will be charged if payment is not made within due date.</li><li>Subject to Kolhapur Jurisdiction only.</li></ol></div><div className="text-center border-t mt-4 pt-1 text-[10px]">This is a Computer Generated Invoice</div></div></div>)}
+
+                {/* HEADER */}
+                <header className="max-w-full mx-auto mb-4 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+                    <div><h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2"><Icons.Package className="w-6 h-6 text-blue-600" />{settings.name}</h1><p className="text-slate-500 text-xs">Inventory System v26.0</p></div>
+                    <div className="flex flex-wrap justify-center gap-2 md:gap-4 items-center">
+                        <div className="bg-white px-2 py-1 rounded shadow-sm border text-right min-w-[80px]"><div className="text-[10px] text-slate-400 font-bold uppercase">Items</div><div className="text-base font-bold text-slate-700">{filteredItems.length}</div></div>
+                        <div className="bg-white px-2 py-1 rounded shadow-sm border text-right min-w-[100px]"><div className="text-[10px] text-slate-400 font-bold uppercase">Sales</div><div className="text-base font-bold text-green-600">₹{totalSales.toFixed(2)}</div></div>
+                        <div className="relative group">
+                            <input type="file" ref={dbInputRef} onChange={handleDbImport} accept=".csv,.xlsx,.xls" className="hidden" />
+                            <button onClick={() => dbInputRef.current.click()} className="p-2 bg-blue-100 rounded-full hover:bg-blue-200 text-blue-600 shadow-md" title="Import DB"><Icons.Upload className="w-5 h-5 md:w-6 md:h-6" /></button>
+                        </div>
+                        <button onClick={() => setCurrentPage('admin')} className="p-2 bg-purple-100 rounded-full hover:bg-purple-200 text-purple-600 shadow-md" title="Admin Panel"><Icons.User className="w-5 h-5" /></button>
+                        <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-200 rounded-full hover:bg-slate-300 text-slate-600"><Icons.Settings className="w-5 h-5 md:w-6 md:h-6" /></button>
                     </div>
                 </header>
 
                 <main className="max-w-full mx-auto no-print">
-                    <div className="bg-white rounded-xl shadow-lg border-2 border-blue-500 p-6 mb-6 flex gap-4">
-                        <div className="relative flex-1">
-                            <input ref={inputRef} type="text" onChange={handleScanInput} onKeyDown={handleScanKeyDown} className="w-full pl-12 pr-4 py-4 text-2xl font-mono border-2 border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:shadow-lg transition-all" placeholder="Scan Barcode Here..." disabled={workflowStep !== 'idle'} autoFocus />
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"><Icons.Search className="w-6 h-6" /></div>
+                    {/* INPUT ROW */}
+                    <div className="bg-white rounded-xl shadow-lg border-2 border-blue-500 p-3 mb-4 flex flex-col md:flex-row gap-2">
+                        <div className="relative flex-1 w-full">
+                            <input ref={inputRef} type="text" onChange={handleScanInput} onKeyDown={handleScanKeyDown} className="w-full pl-10 pr-2 py-3 text-lg border rounded-lg focus:border-blue-500 focus:shadow-lg transition-all" placeholder="SCAN..." disabled={workflowStep !== 'idle'} autoFocus />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"><Icons.Search className="w-5 h-5" /></div>
                         </div>
-                        
-                        <button onClick={startLiveScan} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold px-4 rounded-lg border-2 border-green-200 flex flex-col items-center justify-center min-w-[100px]" disabled={workflowStep !== 'idle'}><Icons.Camera className="w-6 h-6 mb-1" /><span className="text-xs uppercase">Scan Cam</span></button>
-                        
-                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                        <button onClick={() => fileInputRef.current.click()} className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-4 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center min-w-[100px]" disabled={workflowStep !== 'idle'}><Icons.Download className="w-6 h-6 mb-1 rotate-180" /><span className="text-xs uppercase">Upload</span></button>
-                        <button onClick={startManualEntry} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 rounded-lg border-2 border-slate-200 flex flex-col items-center justify-center min-w-[120px]" disabled={workflowStep !== 'idle'}><Icons.Edit className="w-6 h-6 mb-1" /><span className="text-xs uppercase">Manual</span></button>
+                        <div className="grid grid-cols-2 gap-2">
+                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                            <button onClick={() => fileInputRef.current.click()} className="bg-blue-100 text-blue-700 font-bold px-2 py-2 rounded-lg flex flex-col items-center justify-center" disabled={workflowStep !== 'idle'}><Icons.Download className="w-5 h-5 mb-1 rotate-180" /><span className="text-[10px] uppercase">Upload</span></button>
+                            <button onClick={startManualEntry} className="bg-slate-100 text-slate-700 font-bold px-2 py-2 rounded-lg flex flex-col items-center justify-center" disabled={workflowStep !== 'idle'}><Icons.Edit className="w-5 h-5 mb-1" /><span className="text-[10px] uppercase">Manual</span></button>
+                        </div>
                     </div>
 
-                    {status.msg && <div className={`mb-4 p-3 rounded font-bold text-center ${status.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{status.msg}</div>}
+                    {status.msg && <div className={`mb-3 p-2 rounded font-bold text-center text-sm ${status.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{status.msg}</div>}
 
-                    <div className="bg-slate-200 p-4 rounded-xl mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <div className="flex gap-4 w-full md:w-auto flex-1">
-                            <div className="relative flex items-center bg-white rounded-lg px-3 py-2 flex-1 md:flex-none"><Icons.Calendar className="w-4 h-4 text-slate-400 mr-2" /><input type="date" value={searchDate} onChange={(e) => setSearchDate(e.target.value)} className="outline-none text-sm w-full"/>{searchDate && <button onClick={() => setSearchDate("")} className="ml-2 text-xs text-red-500 font-bold">X</button>}</div>
-                            <div className="relative flex items-center bg-white rounded-lg px-3 py-2 flex-1"><Icons.Filter className="w-4 h-4 text-slate-400 mr-2" /><input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="outline-none text-sm w-full"/>{searchQuery && <button onClick={() => setSearchQuery("")} className="ml-2 text-xs text-red-500 font-bold">X</button>}</div>
+                    {/* FILTER & EXPORT */}
+                    <div className="bg-slate-200 p-2 rounded-xl mb-3 flex flex-col md:flex-row gap-2 items-center justify-between">
+                        <div className="flex gap-2 w-full md:w-auto flex-1">
+                            <div className="relative flex-1 bg-white rounded p-1 flex items-center"><Icons.Calendar className="w-4 h-4 mr-1 text-slate-400"/><input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} className="bg-transparent outline-none text-sm w-full"/></div>
+                            <div className="relative flex-1 bg-white rounded p-1 flex items-center"><Icons.Filter className="w-4 h-4 mr-1 text-slate-400"/><input type="text" placeholder="SEARCH..." value={searchQuery} onChange={e => setSearchQuery(e.target.value.toUpperCase())} className="bg-transparent outline-none text-sm w-full uppercase"/></div>
                         </div>
-                        <button onClick={() => { /* reuse CSV logic */ }} className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md"><Icons.Download className="w-4 h-4" /> Export</button>
+                        <button onClick={handleExportClick} className="w-full md:w-auto bg-slate-800 text-white px-4 py-2 rounded font-bold flex items-center justify-center gap-2 shadow-md text-sm"><Icons.Download className="w-4 h-4" /> EXPORT EXCEL</button>
                     </div>
 
+                    {/* TABLE */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[1300px]">
+                            <table className="w-full text-left border-collapse min-w-[1000px]">
                                 <thead>
-                                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 select-none">
-                                        <th className="p-3 text-xs font-bold uppercase whitespace-nowrap">Date & Time</th>
-                                        <th className="p-3 text-xs font-bold uppercase">Customer</th>
-                                        <th className="p-3 text-xs font-bold uppercase w-1/4">Product</th>
-                                        <th className="p-3 text-xs font-bold uppercase">Code</th>
-                                        <th className="p-3 text-xs font-bold uppercase">Sr. No</th>
+                                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 select-none text-xs">
+                                        <th className="p-2 whitespace-nowrap">DATE</th>
+                                        <th className="p-2">CUSTOMER</th>
+                                        <th className="p-2 w-1/4">PRODUCT</th>
+                                        <th className="p-2">CODE</th>
+                                        <th className="p-2">SR. NO</th>
                                         {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(key => (
-                                            <th key={key} onClick={() => requestSort(key)} className={`p-3 text-xs font-bold uppercase text-right cursor-pointer hover:bg-slate-200 ${getSortClass(key)}`}>{key.replace(/([A-Z])/g, ' $1').trim()}</th>
+                                            <th key={key} onClick={() => requestSort(key)} className={`p-2 text-right cursor-pointer hover:bg-slate-200 ${getSortClass(key)}`}>
+                                                {key === 'unGstCash' ? 'UN GST CASH' : key === 'unNonGstCash' ? 'UN NON GST CASH' : key === 'un1ac' ? 'UN 1 A/C' : key === 'un2ac' ? 'UN 2 A/C' : key.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}
+                                            </th>
                                         ))}
-                                        <th className="p-3 text-center">Actions</th>
+                                        <th className="p-2 text-center">ACT</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 text-sm">
                                     {filteredItems.map((item) => (
-                                        <tr key={item.id} className="hover:bg-slate-50 text-sm">
-                                            <td className="p-3 text-slate-500 font-mono text-xs">{item.dateTime}</td>
-                                            <td className="p-3 font-medium">{item.customer}</td>
-                                            <td className="p-3 text-slate-700">{item.desc}</td>
-                                            <td className="p-3 text-slate-500 font-mono text-xs">{item.code}</td>
-                                            <td className="p-3 text-slate-700 font-mono text-xs font-bold">{item.srNo}</td>
+                                        <tr key={item.id} className="hover:bg-slate-50">
+                                            <td className="p-2 text-slate-500 text-xs">{item.dateTime.split(' ')[0]}<br/>{item.dateTime.split(' ')[1]}</td>
+                                            <td className="p-2 font-medium">{item.customer}</td>
+                                            <td className="p-2 text-slate-700 text-xs">{item.desc}</td>
+                                            <td className="p-2 text-slate-500 text-xs">{item.code}</td>
+                                            <td className="p-2 text-slate-700 text-xs font-bold">{item.srNo}</td>
                                             {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(key => (
-                                                <td key={key} className="p-3 text-right font-mono font-bold text-slate-700">{item[key]}</td>
+                                                <td key={key} className="p-2 text-right font-mono font-bold text-slate-700">{item[key]}</td>
                                             ))}
-                                            <td className="p-3 text-center flex justify-center gap-2">
-                                                <button onClick={() => handleRowPrint(item)} className="text-green-500 hover:text-green-700" title="Print Bill"><Icons.Printer className="w-4 h-4" /></button>
-                                                <button onClick={() => handleEditClick(item)} className="text-blue-400 hover:text-blue-600" title="Edit"><Icons.Edit className="w-4 h-4" /></button>
-                                                <button onClick={() => { if(confirm("Delete?")) setItems(prev => prev.filter(i => i.id !== item.id)) }} className="text-red-300 hover:text-red-500" title="Delete"><Icons.Trash className="w-4 h-4" /></button>
+                                            <td className="p-2 text-center flex justify-center gap-1">
+                                                <button onClick={() => handleRowPrint(item)} className="text-green-500 p-1"><Icons.Printer className="w-4 h-4" /></button>
+                                                <button onClick={() => handleEditClick(item)} className="text-blue-400 p-1"><Icons.Edit className="w-4 h-4" /></button>
+                                                <button onClick={() => { if(confirm("DELETE ENTRY?")) setItems(prev => prev.filter(i => i.id !== item.id)) }} className="text-red-300 p-1"><Icons.Trash className="w-4 h-4" /></button>
                                             </td>
                                         </tr>
                                     ))}
@@ -600,135 +664,67 @@
                     </div>
                 </main>
 
-                {/* MODALS Code (Workflow) */}
-                {(['manual_desc', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category'].includes(workflowStep)) && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print">
-                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
-                            <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
-                            {/* Workflow steps same as before... */}
-                            {workflowStep === 'manual_desc' && <form onSubmit={handleManualDescSubmit}><h2 className="text-xl font-bold mb-4">Manual Entry</h2><input ref={modalRefs.manual} type="text" value={manualDescInput} onChange={(e) => setManualDescInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Item Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
-                            {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-xl font-bold mb-1">Unknown Item</h2><p className="text-xs text-slate-400 mb-4 font-mono">{currentScan?.code}</p><input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Product Name" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
-                            {workflowStep === 'customer_name' && <form onSubmit={handleCustomerNameSubmit}><h2 className="text-xl font-bold mb-4">Customer Name</h2><input ref={modalRefs.name} type="text" value={customerNameInput} onChange={(e) => setCustomerNameInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Name" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div><button type="button" onClick={handleCustomerSkip} className="w-full mt-2 text-sm text-slate-400 hover:text-slate-600">Skip Name</button></form>}
-                            {workflowStep === 'customer_mobile' && <form onSubmit={handleCustomerMobileSubmit}><h2 className="text-xl font-bold mb-4">Mobile Number</h2><input ref={modalRefs.mobile} type="number" value={customerMobileInput} onChange={(e) => setCustomerMobileInput(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="Mobile" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-green-600 text-white py-3 rounded-lg font-bold">Save</button></div><button type="button" onClick={handleCustomerMobileSubmit} className="w-full mt-2 text-sm text-slate-400 hover:text-slate-600">Skip Number</button></form>}
-                            {workflowStep === 'price' && <form onSubmit={handlePriceSubmit}><h2 className="text-xl font-bold mb-1">Confirm Price</h2><p className="text-slate-500 mb-4 text-sm">{currentScan?.desc}</p><input ref={modalRefs.price} type="number" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full text-4xl font-bold text-center border-b-2 py-2 mb-6" step="0.01" /><div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold">Back</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold">Next</button></div></form>}
-                            {workflowStep === 'category' && <div className="w-full"><div className="text-center mb-6"><h2 className="text-2xl font-bold">Select Category</h2><p className="text-slate-500">₹{parseFloat(currentScan?.confirmedPrice).toFixed(2)}</p></div><div className="grid grid-cols-2 gap-3 mb-4"><button onClick={() => handleCategorySelect('gkCash')} className="p-3 bg-green-50 border border-green-200 text-green-800 font-bold rounded">GK Cash</button><button onClick={() => handleCategorySelect('gkBank')} className="p-3 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded">GK Bank</button><button onClick={() => handleCategorySelect('unGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded">UN GST</button><button onClick={() => handleCategorySelect('unNonGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded">UN Non-GST</button><button onClick={() => handleCategorySelect('un1ac')} className="p-3 bg-purple-50 border border-purple-200 text-purple-800 font-bold rounded">UN 1 AC</button><button onClick={() => handleCategorySelect('un2ac')} className="p-3 bg-orange-50 border border-orange-200 text-orange-800 font-bold rounded">UN 2 AC</button></div><button onClick={handleBack} className="w-full py-2 bg-gray-200 rounded font-bold text-gray-600">Back</button></div>}
-                        </div>
-                    </div>
-                )}
+                {/* --- MODALS --- */}
 
-                {/* INVOICE OPTIONS MODAL */}
-                {invoiceStep !== 'idle' && (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center modal-overlay no-print">
-                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
-                            <button onClick={handleCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500"><Icons.X className="w-5 h-5" /></button>
-                            {invoiceStep === 'input_no' && (
-                                <form onSubmit={handleInvoiceNoSubmit}>
-                                    <h2 className="text-xl font-bold mb-4">Enter Invoice Number</h2>
-                                    <input ref={modalRefs.invoice} type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="w-full border-2 rounded-lg p-3 mb-6" placeholder="e.g. INV-2024-001" />
-                                    <div className="grid grid-cols-2 gap-4"><button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded-lg font-bold hover:bg-slate-200">Skip</button><button type="submit" className="bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Next</button></div>
-                                </form>
-                            )}
-                            {invoiceStep === 'select_format' && (
-                                <div>
-                                    <h2 className="text-xl font-bold mb-6 text-center">Choose Format</h2>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <button onClick={() => handleDownload('image')} className="flex items-center justify-center gap-3 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 text-blue-800 py-4 rounded-xl font-bold transition-all"><Icons.Image className="w-6 h-6" /> Download Image (JPG)</button>
-                                        <button onClick={() => handleDownload('pdf')} className="flex items-center justify-center gap-3 bg-red-50 border-2 border-red-200 hover:bg-red-100 text-red-800 py-4 rounded-xl font-bold transition-all"><Icons.FileText className="w-6 h-6" /> Download PDF</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* ADMIN EDIT MODAL */}
-                {editingItem && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay no-print">
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full relative max-h-[90vh] overflow-y-auto">
-                            <div className="flex justify-between items-center mb-6 border-b pb-2">
-                                <h2 className="text-2xl font-bold">Admin Edit / Details</h2>
-                                <button onClick={() => setEditingItem(null)} className="text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-6 h-6" /></button>
-                            </div>
+                {/* WORKFLOW MODALS */}
+                {(['manual_desc', 'manual_code', 'manual_serial', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category', 'select_product'].includes(workflowStep)) && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-sm relative max-h-[85vh] overflow-y-auto">
+                            <button onClick={handleCancel} className="absolute top-3 right-3 text-slate-400"><Icons.X className="w-6 h-6" /></button>
                             
-                            <form onSubmit={handleEditSave} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-xs font-bold text-slate-500">Date/Time</label><input type="text" value={editingItem.dateTime} readOnly className="w-full border p-2 rounded bg-slate-100" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500">Invoice No (Saved)</label><input type="text" value={editingItem.invoiceNo || ""} onChange={e => setEditingItem({...editingItem, invoiceNo: e.target.value})} className="w-full border p-2 rounded" placeholder="Will auto-fill on print" /></div>
-                                </div>
+                            {workflowStep === 'manual_desc' && <form onSubmit={handleManualDescSubmit}>
+                                <h2 className="text-lg font-bold mb-3">PRODUCT NAME</h2>
+                                <input ref={modalRefs.manual} type="text" value={manualDescInput} onChange={handleManualInputChange} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="START TYPING..." />
+                                {suggestions.length > 0 && <ul className="border rounded bg-white max-h-32 overflow-y-auto mb-3 shadow-lg absolute w-[85%] z-50">
+                                    {suggestions.map((s, i) => <li key={i} onClick={() => selectSuggestion(s)} className="p-3 hover:bg-blue-50 cursor-pointer border-b text-sm"><div className="font-bold">{s.desc}</div><div className="text-xs text-slate-500">₹{s.rate} | SN: {s.barcode}</div></li>)}
+                                </ul>}
+                                <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded font-bold mt-2">NEXT</button>
+                            </form>}
 
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Product Name</label><input type="text" value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500">Item Code</label><input type="text" value={editingItem.code} onChange={e => setEditingItem({...editingItem, code: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                </div>
+                            {workflowStep === 'manual_code' && <form onSubmit={handleManualCodeSubmit}><h2 className="text-lg font-bold mb-3">ITEM CODE</h2><input ref={modalRefs.manualCode} type="text" value={manualCodeInput} onChange={e => setManualCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="CODE" /><div className="flex gap-2"><button type="button" onClick={handleBack} className="bg-slate-200 py-3 px-4 rounded font-bold">BACK</button><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
+                            
+                            {workflowStep === 'manual_serial' && <form onSubmit={handleManualSerialSubmit}><h2 className="text-lg font-bold mb-3">SERIAL NUMBER</h2><input ref={modalRefs.manualSerial} type="text" value={manualSerialInput} onChange={e => setManualSerialInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="SERIAL NO" /><div className="flex gap-2"><button type="button" onClick={handleBack} className="bg-slate-200 py-3 px-4 rounded font-bold">BACK</button><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-xs font-bold text-slate-500">Serial No / Batch</label><input type="text" value={editingItem.srNo} onChange={e => setEditingItem({...editingItem, srNo: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500">Customer Details</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                </div>
+                            {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-lg font-bold mb-1">UNKNOWN ITEM</h2><p className="text-xs text-slate-400 mb-3 font-mono">{currentScan?.code}</p><input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="PRODUCT NAME" /><button type="submit" className="w-full bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></form>}
+                            
+                            {workflowStep === 'select_product' && <div><h2 className="text-lg font-bold mb-3">SELECT PRODUCT</h2><div className="space-y-2">{multipleMatches.map((m, i) => <button key={i} onClick={() => handleProductSelection(m)} className="w-full p-3 border rounded hover:bg-blue-50 text-left"><div className="font-bold">{m.desc}</div><div className="text-xs text-slate-500">{m.code} | ₹{m.rate}</div></button>)}</div></div>}
 
-                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                    <h3 className="text-sm font-bold text-slate-700 mb-2">Financials</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div><label className="text-xs font-bold text-slate-500">Amount (₹)</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded text-lg font-bold text-green-600" /></div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500">Category / Column</label>
-                                            <select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded bg-white">
-                                                {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c.replace(/([A-Z])/g, ' $1').trim()}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-4 pt-4 border-t">
-                                    <button type="button" onClick={handlePrintFromEdit} className="flex-1 bg-green-100 text-green-700 py-3 rounded font-bold hover:bg-green-200 flex justify-center gap-2"><Icons.Printer className="w-5 h-5"/> Reprint Bill</button>
-                                    <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">Save Changes</button>
-                                    <button type="button" onClick={handleDeleteFromEdit} className="px-4 bg-red-100 text-red-600 rounded hover:bg-red-200"><Icons.Trash className="w-5 h-5" /></button>
-                                </div>
-                            </form>
+                            {workflowStep === 'customer_name' && <form onSubmit={handleCustomerNameSubmit}><h2 className="text-lg font-bold mb-3">CUSTOMER NAME</h2><input ref={modalRefs.name} type="text" value={customerNameInput} onChange={(e) => setCustomerNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="NAME" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div><button type="button" onClick={handleCustomerSkip} className="w-full mt-3 p-3 bg-slate-800 text-white font-extrabold rounded-lg hover:bg-slate-900 uppercase tracking-wide text-sm shadow-md">SKIP NAME</button></form>}
+                            
+                            {workflowStep === 'customer_mobile' && <form onSubmit={handleCustomerMobileSubmit}><h2 className="text-lg font-bold mb-3">MOBILE NUMBER</h2><input ref={modalRefs.mobile} type="number" value={customerMobileInput} onChange={(e) => setCustomerMobileInput(e.target.value)} className="w-full border rounded p-3 mb-4 text-lg" placeholder="MOBILE" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-green-600 text-white py-3 rounded font-bold">SAVE</button></div><button type="button" onClick={handleCustomerMobileSubmit} className="w-full mt-3 p-3 bg-slate-800 text-white font-extrabold rounded-lg hover:bg-slate-900 uppercase tracking-wide text-sm shadow-md">SKIP NUMBER</button></form>}
+                            
+                            {workflowStep === 'price' && <form onSubmit={handlePriceSubmit}><h2 className="text-lg font-bold mb-1">CONFIRM PRICE</h2><p className="text-slate-500 mb-3 text-xs truncate">{currentScan?.desc}</p><input ref={modalRefs.price} type="number" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full text-3xl font-bold text-center border-b-2 py-2 mb-4 bg-transparent" step="0.01" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
+                            
+                            {workflowStep === 'category' && <div><div className="text-center mb-4"><h2 className="text-lg font-bold">SELECT CATEGORY</h2><p className="text-slate-500">₹{parseFloat(currentScan?.confirmedPrice).toFixed(2)}</p></div><div className="grid grid-cols-2 gap-2 mb-4"><button onClick={() => handleCategorySelect('gkCash')} className="p-3 bg-green-50 border border-green-200 text-green-800 font-bold rounded text-sm uppercase">GK Cash</button><button onClick={() => handleCategorySelect('gkBank')} className="p-3 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded text-sm uppercase">GK Bank</button><button onClick={() => handleCategorySelect('unGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded text-sm uppercase">UN GST Cash</button><button onClick={() => handleCategorySelect('unNonGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded text-sm uppercase">UN Non GST Cash</button><button onClick={() => handleCategorySelect('un1ac')} className="p-3 bg-purple-50 border border-purple-200 text-purple-800 font-bold rounded text-sm uppercase">UN 1 AC</button><button onClick={() => handleCategorySelect('un2ac')} className="p-3 bg-orange-50 border border-orange-200 text-orange-800 font-bold rounded text-sm uppercase">UN 2 AC</button></div><button onClick={handleBack} className="w-full py-2 bg-gray-200 rounded font-bold text-gray-600 uppercase">BACK</button></div>}
                         </div>
                     </div>
                 )}
 
-                {/* LIVE CAMERA OVERLAY */}
-                {isCameraOpen && (
-                    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black bg-opacity-95">
-                        <div id="reader-live" className="w-full max-w-sm h-64 bg-black"></div>
-                        <button onClick={stopLiveScan} className="mt-8 bg-red-600 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg hover:bg-red-700 transition-all transform hover:scale-105 flex items-center gap-2">
-                            <Icons.X className="w-6 h-6"/> Stop Camera
-                        </button>
-                        <p className="text-gray-400 mt-4 text-sm">Point camera at a barcode</p>
-                    </div>
-                )}
-
-                {/* SHOP SETTINGS MODAL */}
-                {isSettingsOpen && (
-                    <div className="fixed inset-0 z-[160] flex items-center justify-center modal-overlay no-print">
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full relative max-h-[90vh] overflow-y-auto">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold">Shop Settings</h2>
-                                <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 font-bold"><Icons.X className="w-6 h-6" /></button>
-                            </div>
-                            <div className="space-y-4">
-                                <div><label className="text-xs font-bold text-slate-500">Shop Name</label><input type="text" value={settings.name} onChange={e => setSettings({...settings, name: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                <div><label className="text-xs font-bold text-slate-500">Address (Use enter for new lines)</label><textarea rows="3" value={settings.address} onChange={e => setSettings({...settings, address: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-xs font-bold text-slate-500">Contact No</label><input type="text" value={settings.contact} onChange={e => setSettings({...settings, contact: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500">Email</label><input type="text" value={settings.email} onChange={e => setSettings({...settings, email: e.target.value})} className="w-full border p-2 rounded" /></div>
+                {/* EXPORT MODAL */}
+                {exportModalOpen && (
+                    <div className="fixed inset-0 z-[160] flex items-center justify-center modal-overlay no-print p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative">
+                            <button onClick={() => setExportModalOpen(false)} className="absolute top-3 right-3 text-slate-400"><Icons.X className="w-6 h-6" /></button>
+                            <h2 className="text-xl font-bold mb-4 text-center">EXPORT DATA</h2>
+                            <button onClick={exportToday} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mb-4 shadow hover:bg-blue-700">EXPORT TODAY'S SALES</button>
+                            <div className="border-t pt-4">
+                                <p className="text-sm font-bold text-slate-500 mb-2 uppercase">Custom Date Range</p>
+                                <div className="flex gap-2 mb-3">
+                                    <input type="date" value={exportStartDate} onChange={e => setExportStartDate(e.target.value)} className="w-1/2 border rounded p-2 text-sm" />
+                                    <input type="date" value={exportEndDate} onChange={e => setExportEndDate(e.target.value)} className="w-1/2 border rounded p-2 text-sm" />
                                 </div>
-                                <div><label className="text-xs font-bold text-slate-500">GSTIN</label><input type="text" value={settings.gstin} onChange={e => setSettings({...settings, gstin: e.target.value})} className="w-full border p-2 rounded" /></div>
-                                <div className="p-3 bg-blue-50 rounded">
-                                    <h4 className="font-bold text-sm mb-2 text-blue-800">Bank Details for Bill</h4>
-                                    <div className="space-y-2">
-                                        <input type="text" value={settings.bankName} onChange={e => setSettings({...settings, bankName: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="Bank Name" />
-                                        <input type="text" value={settings.acNo} onChange={e => setSettings({...settings, acNo: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="A/c No" />
-                                        <input type="text" value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="Branch & IFSC" />
-                                    </div>
-                                </div>
-                                <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-blue-600 text-white py-3 rounded font-bold">Save Settings</button>
+                                <button onClick={exportRange} className="w-full bg-slate-800 text-white py-3 rounded-lg font-bold shadow hover:bg-slate-900">EXPORT RANGE</button>
                             </div>
                         </div>
                     </div>
                 )}
+
+                {/* INVOICE NO / EDIT / SETTINGS MODALS (Same as previous versions) */}
+                {invoiceStep !== 'idle' && <div className="fixed inset-0 z-[150] flex items-center justify-center modal-overlay no-print p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative"><button onClick={handleCancel} className="absolute top-3 right-3 text-slate-400"><Icons.X className="w-6 h-6" /></button>{invoiceStep === 'input_no' && <form onSubmit={handleInvoiceNoSubmit}><h2 className="text-lg font-bold mb-3">INVOICE NO</h2><input ref={modalRefs.invoice} type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="E.G. INV-001" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded font-bold uppercase">SKIP</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold uppercase">NEXT</button></div></form>}{invoiceStep === 'select_format' && <div><h2 className="text-lg font-bold mb-4 text-center">FORMAT</h2><div className="flex flex-col gap-3"><button onClick={() => handleDownload('image')} className="bg-blue-50 border border-blue-200 text-blue-800 py-3 rounded font-bold flex justify-center gap-2 uppercase"><Icons.Image className="w-5 h-5"/> IMAGE (JPG)</button><button onClick={() => handleDownload('pdf')} className="bg-red-50 border border-red-200 text-red-800 py-3 rounded font-bold flex justify-center gap-2 uppercase"><Icons.FileText className="w-5 h-5"/> PDF</button></div></div>}</div></div>}
+                
+                {editingItem && <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay no-print p-4"><div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-md relative max-h-[90vh] overflow-y-auto"><div className="flex justify-between items-center mb-4 border-b pb-2"><h2 className="text-xl font-bold">EDIT ITEM</h2><button onClick={() => setEditingItem(null)} className="text-slate-400"><Icons.X className="w-6 h-6" /></button></div><form onSubmit={handleEditSave} className="space-y-3"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">DATE</label><input type="date" value={editingItem.editDate} onChange={e => setEditingItem({...editingItem, editDate: e.target.value})} className="w-full border p-2 rounded" /></div><div><label className="text-xs font-bold text-slate-500">TIME</label><input type="time" value={editingItem.editTime} onChange={e => setEditingItem({...editingItem, editTime: e.target.value})} className="w-full border p-2 rounded" /></div></div><div><label className="text-xs font-bold text-slate-500">INVOICE NO</label><input type="text" value={editingItem.invoiceNo || ""} onChange={e => setEditingItem({...editingItem, invoiceNo: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div className="relative"> <label className="text-xs font-bold text-slate-500">PRODUCT</label><input type="text" value={editingItem.desc} onChange={handleEditSearchChange} className="w-full border p-2 rounded uppercase" />{editSuggestions.length > 0 && <ul className="absolute z-50 bg-white border rounded w-full max-h-32 overflow-y-auto shadow-lg">{editSuggestions.map((s, i) => <li key={i} onClick={() => applyEditProduct(s)} className="p-2 hover:bg-blue-50 cursor-pointer text-xs border-b uppercase">{s.desc}</li>)}</ul>}</div><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">SERIAL</label><input type="text" value={editingItem.srNo} onChange={e => setEditingItem({...editingItem, srNo: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div><label className="text-xs font-bold text-slate-500">CODE</label><input type="text" value={editingItem.code} onChange={e => setEditingItem({...editingItem, code: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div></div><div><label className="text-xs font-bold text-slate-500">CUSTOMER</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div className="p-3 bg-slate-50 rounded border"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">AMOUNT</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded text-lg font-bold text-green-600" /></div><div><label className="text-xs font-bold text-slate-500">CATEGORY</label><select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded bg-white text-xs uppercase">{['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c === 'unGstCash' ? 'UN GST CASH' : c === 'unNonGstCash' ? 'UN NON GST CASH' : c === 'un1ac' ? 'UN 1 A/C' : c === 'un2ac' ? 'UN 2 A/C' : c.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}</option>)}</select></div></div></div><div className="flex gap-3 pt-2 border-t"><button type="button" onClick={handlePrintFromEdit} className="flex-1 bg-green-100 text-green-700 py-2 rounded font-bold flex justify-center items-center gap-1 uppercase"><Icons.Printer className="w-4 h-4"/> PRINT</button><button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded font-bold uppercase">SAVE</button><button type="button" onClick={handleDeleteFromEdit} className="px-3 bg-red-100 text-red-600 rounded"><Icons.Trash className="w-5 h-5" /></button></div></form></div></div>}
+                
+                {isSettingsOpen && <div className="fixed inset-0 z-[160] flex items-center justify-center modal-overlay no-print p-4"><div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-md relative max-h-[90vh] overflow-y-auto"><div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">SETTINGS</h2><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400"><Icons.X className="w-6 h-6" /></button></div><div className="space-y-3"><div><label className="text-xs font-bold text-slate-500">SHOP NAME</label><input type="text" value={settings.name} onChange={e => setSettings({...settings, name: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div><label className="text-xs font-bold text-slate-500">ADDRESS</label><textarea rows="2" value={settings.address} onChange={e => setSettings({...settings, address: e.target.value})} className="w-full border p-2 rounded" /></div><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">CONTACT</label><input type="text" value={settings.contact} onChange={e => setSettings({...settings, contact: e.target.value})} className="w-full border p-2 rounded" /></div><div><label className="text-xs font-bold text-slate-500">EMAIL</label><input type="text" value={settings.email} onChange={e => setSettings({...settings, email: e.target.value})} className="w-full border p-2 rounded" /></div></div><div><label className="text-xs font-bold text-slate-500">GSTIN</label><input type="text" value={settings.gstin} onChange={e => setSettings({...settings, gstin: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div className="p-3 bg-blue-50 rounded"><h4 className="font-bold text-sm mb-2 text-blue-800">BANK DETAILS</h4><div className="space-y-2"><input type="text" value={settings.bankName} onChange={e => setSettings({...settings, bankName: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="Bank Name" /><input type="text" value={settings.acNo} onChange={e => setSettings({...settings, acNo: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="A/c No" /><input type="text" value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value})} className="w-full border p-1 rounded text-sm" placeholder="IFSC" /></div></div><button onClick={() => setIsSettingsOpen(false)} className="w-full bg-blue-600 text-white py-3 rounded font-bold uppercase">SAVE</button></div></div></div>}
 
             </div>
         );
