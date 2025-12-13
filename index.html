@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patil Communication - Inventory v33</title>
+    <title>Patil Communication - Inventory v34 (Cloud Sync)</title>
     
     <!-- React & Tailwind -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -64,6 +64,43 @@
 <div id="root"></div>
 <div id="reader-hidden" style="display: none;"></div>
 
+<!-- FIREBASE SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- YOUR FIREBASE CONFIGURATION GOES HERE ---
+    // If hosting on GitHub, replace this block with your actual config from Firebase Console
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "APP_ID"
+    };
+    // ---------------------------------------------
+
+    let auth, db;
+    try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        console.log("Firebase initialized");
+    } catch (e) {
+        console.warn("Firebase Init Failed (Check Config):", e);
+    }
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'patil-inventory-v34';
+
+    window.firebaseApi = { 
+        auth, db, appId, 
+        signInAnonymously, signInWithCustomToken, onAuthStateChanged, 
+        doc, setDoc, getDoc, collection, onSnapshot, updateDoc, arrayUnion 
+    };
+</script>
+
 <script type="text/babel">
     const { useState, useEffect, useRef, useMemo } = React;
 
@@ -98,7 +135,9 @@
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
         Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
         Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
-        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />
+        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />,
+        Camera: (props) => <Icon {...props} p={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>} />,
+        Sync: (props) => <Icon {...props} p={<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>} />
     };
 
     const DEFAULT_SETTINGS = {
@@ -121,7 +160,7 @@
 
     function App() {
         const [showIntro, setShowIntro] = useState(true);
-        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v31') || '[]'));
+        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v34') || '[]'));
         const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem('patil_settings') || JSON.stringify(DEFAULT_SETTINGS)));
         const [customDB, setCustomDB] = useState(() => JSON.parse(localStorage.getItem('patil_custom_db') || '{}'));
         const [status, setStatus] = useState({ type: '', msg: '' });
@@ -170,6 +209,8 @@
         const [newProdRate, setNewProdRate] = useState("");
 
         const [editSuggestions, setEditSuggestions] = useState([]);
+        const [user, setUser] = useState(null); // Firebase user
+        const [dbType, setDbType] = useState('local'); // 'local' or 'cloud'
 
         const inputRef = useRef(null); 
         const fileInputRef = useRef(null);
@@ -182,8 +223,65 @@
         };
         const timeoutRef = useRef(null);
 
-        // Persistence
-        useEffect(() => localStorage.setItem('patil_inventory_v31', JSON.stringify(items)), [items]);
+        // --- FIREBASE SYNC ---
+        useEffect(() => {
+            if (window.firebaseApi && window.firebaseApi.auth) {
+                const { auth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, db, doc, onSnapshot, appId } = window.firebaseApi;
+                
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
+
+                const unsubscribe = onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        setUser(u);
+                        setDbType('cloud');
+                        // Use a specific document in the database
+                        const unsubDoc = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory_v34', 'main'), (snap) => {
+                            if (snap.exists()) {
+                                const data = snap.data();
+                                if(data.items && data.lastUpdate > (parseInt(localStorage.getItem('patil_last_update')||0))) {
+                                    setItems(data.items);
+                                    localStorage.setItem('patil_inventory_v34', JSON.stringify(data.items));
+                                    localStorage.setItem('patil_last_update', data.lastUpdate);
+                                    setStatus({ type: 'success', msg: 'Synced with Cloud!' });
+                                    setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                                }
+                                if(data.customDB) {
+                                    setCustomDB(data.customDB);
+                                    localStorage.setItem('patil_custom_db', JSON.stringify(data.customDB));
+                                }
+                            }
+                        });
+                        return () => unsubDoc();
+                    }
+                });
+                return () => unsubscribe();
+            }
+        }, []);
+
+        const saveToCloud = async (newItems, newDB) => {
+            if (user && window.firebaseApi) {
+                const { db, appId, doc, setDoc } = window.firebaseApi;
+                const timestamp = Date.now();
+                localStorage.setItem('patil_last_update', timestamp);
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory_v34', 'main'), {
+                        items: newItems,
+                        customDB: newDB || customDB,
+                        lastUpdate: timestamp
+                    }, { merge: true });
+                } catch(e) { console.warn("Cloud save failed", e); }
+            }
+        };
+
+        // Persistence (Local)
+        useEffect(() => localStorage.setItem('patil_inventory_v34', JSON.stringify(items)), [items]);
         useEffect(() => localStorage.setItem('patil_settings', JSON.stringify(settings)), [settings]);
         useEffect(() => localStorage.setItem('patil_custom_db', JSON.stringify(customDB)), [customDB]);
 
@@ -193,6 +291,8 @@
                 if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
                 if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
                 if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
+                if (workflowStep === 'manual_code' && modalRefs.manualCode && modalRefs.manualCode.current) setTimeout(() => modalRefs.manualCode.current.focus(), 50);
+                if (workflowStep === 'manual_serial' && modalRefs.manualSerial && modalRefs.manualSerial.current) setTimeout(() => modalRefs.manualSerial.current.focus(), 50);
                 if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50);
                 if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50);
                 if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
@@ -237,11 +337,10 @@
                 setPriceInput(product.rate > 0 ? product.rate.toString() : ""); 
                 setCustomerNameInput(""); setWorkflowStep('customer_name');
             } else {
-                // Unknown - Ask user to define it
                 setCurrentScan({ code: "UNKNOWN", srNo: upCode, rate: 0, customerName: "", entryMethod: 'unknown' });
                 setProductNameInput(""); 
                 setProductCodeInput(""); 
-                setProductSerialInput(upCode); // Pre-fill with scanned
+                setProductSerialInput(upCode); 
                 setWorkflowStep('product_name');
             }
             if(inputRef.current) inputRef.current.value = "";
@@ -254,7 +353,6 @@
             setWorkflowStep('customer_name');
         };
 
-        // --- MANUAL ENTRY WORKFLOW ---
         const startManualEntry = () => { setManualDescInput(""); setSuggestions([]); setWorkflowStep('manual_desc'); };
         
         const handleManualInputChange = (e) => {
@@ -282,7 +380,6 @@
 
         const handleManualDescSubmit = (e) => { 
             e.preventDefault(); 
-            // Proceed to Code if not selected from suggestion
             setCurrentScan({ desc: manualDescInput.trim() || "MANUAL ITEM", rate: 0, customerName: "", entryMethod: 'manual' });
             setProductNameInput(manualDescInput.trim()); 
             setProductCodeInput(""); 
@@ -290,17 +387,14 @@
             setWorkflowStep('product_name'); 
         };
 
-        // --- SAVE NEW PRODUCT TO DB ---
         const handleProductNameSubmit = (e) => { 
             e.preventDefault(); 
             const name = productNameInput.trim().toUpperCase() || "UNKNOWN"; 
             const code = productCodeInput.trim().toUpperCase() || "N/A";
             const serial = productSerialInput.trim().toUpperCase();
             
-            // Update current scan in memory
             setCurrentScan(prev => ({ ...prev, desc: name, code: code, srNo: serial })); 
             
-            // SAVE TO DB: Save this definition
             if(serial && serial !== "MANUAL") {
                 const newEntry = { desc: name, code: code, rate: 0 }; 
                 const key = serial;
@@ -312,6 +406,7 @@
                     newDB[key] = [newEntry];
                 }
                 setCustomDB(newDB);
+                saveToCloud(items, newDB); 
                 setStatus({ type: 'success', msg: 'Product Added to Database!' });
                 setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
             }
@@ -328,7 +423,6 @@
             const price = parseFloat(priceInput); 
             if (!price || isNaN(price)) { alert("Invalid price"); return; } 
             
-            // Update rate in DB if we just added it via the unknown flow
             if(currentScan.srNo && currentScan.entryMethod === 'unknown' && customDB[currentScan.srNo]) {
                 const newDB = { ...customDB };
                 const entry = newDB[currentScan.srNo];
@@ -337,6 +431,7 @@
                    if(target) target.rate = price;
                 }
                 setCustomDB(newDB);
+                saveToCloud(items, newDB); 
             }
 
             setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); 
@@ -354,7 +449,9 @@
                 gkCash: "-", gkBank: "-", unGstCash: "-", unNonGstCash: "-", un1ac: "-", un2ac: "-", invoiceNo: ""
             };
             newItem[categoryKey] = price;
-            setItems(prev => [newItem, ...prev]);
+            const updatedItems = [newItem, ...items];
+            setItems(updatedItems);
+            saveToCloud(updatedItems); 
             setStatus({ type: 'success', msg: `Saved to ${categoryKey.toUpperCase()}` }); 
             handleCancel(); 
         };
@@ -409,7 +506,6 @@
             exportData(subset);
         };
 
-        // --- DB IMPORT ---
         const handleDbImport = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -417,13 +513,12 @@
                 const data = event.target.result;
                 let rows = [];
                 if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) { const wb = XLSX.read(data, { type: 'binary' }); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); } else { rows = Papa.parse(data, { header: false }).data; }
-                
                 const newEntries = { ...customDB };
                 let count = 0;
                 let nameIdx=0, snIdx=1, codeIdx=2, rateIdx=3;
                 if (rows.length > 0) {
                     const h = rows[0].map(c => c ? c.toString().toLowerCase() : "");
-                    h.forEach((val, i) => { if(val.includes("name")||val.includes("particular")||val.includes("desc")) nameIdx=i; if(val.includes("serial")||val.includes("sr")||val.includes("barcode")) snIdx=i; if(val.includes("code")) codeIdx=i; if(val.includes("rate")||val.includes("mrp")||val.includes("price")) rateIdx=i; });
+                    h.forEach((val, i) => { if(val.includes("name")||val.includes("particular")||val.includes("desc")) nameIdx=i; if(val.includes("serial")||val.includes("sr")||val.includes("barcode")) snIdx=i; if(val.includes("code")) cI=i; if(val.includes("rate")||val.includes("mrp")||val.includes("price")) rateIdx=i; });
                 }
                 rows.forEach((row, i) => {
                     if (i===0) return;
@@ -439,7 +534,10 @@
                         }
                     }
                 });
-                setCustomDB(newEntries); setStatus({ type: 'success', msg: `Imported ${count} Items` }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+                setCustomDB(newEntries); 
+                saveToCloud(items, newEntries); 
+                setStatus({ type: 'success', msg: `Imported ${count} Items` }); 
+                setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
             };
             if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) reader.readAsBinaryString(file); else reader.readAsText(file); e.target.value = '';
         };
@@ -450,23 +548,13 @@
             const code = newProdCode.trim().toUpperCase();
             const serial = newProdSerial.trim().toUpperCase();
             const rate = parseFloat(newProdRate) || 0;
-
             if (!name || !serial) { alert("Name and Serial are required"); return; }
-
             const newDB = { ...customDB };
             const product = { desc: name, code, rate };
-            
-            if (newDB[serial]) {
-                if (Array.isArray(newDB[serial])) newDB[serial].push(product);
-                else newDB[serial] = [newDB[serial], product];
-            } else {
-                newDB[serial] = [product];
-            }
-            
-            setCustomDB(newDB);
-            setNewProdName(""); setNewProdCode(""); setNewProdSerial(""); setNewProdRate("");
-            setStatus({ type: 'success', msg: 'Product Added to Stock!' });
-            setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+            if (newDB[serial]) { if (Array.isArray(newDB[serial])) newDB[serial].push(product); else newDB[serial] = [newDB[serial], product]; } else { newDB[serial] = [product]; }
+            setCustomDB(newDB); 
+            saveToCloud(items, newDB); 
+            setNewProdName(""); setNewProdCode(""); setNewProdSerial(""); setNewProdRate(""); setStatus({ type: 'success', msg: 'Product Added to Stock!' }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
         };
 
         const handleDownloadStock = () => {
@@ -479,18 +567,17 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(rows);
             XLSX.utils.book_append_sheet(wb, ws, "Stock");
-            XLSX.writeFile(wb, "Patil_Stock_Backup.xlsx");
+            XLSX.writeFile(wb, "stock all.xlsx");
         };
 
-        // --- HELPERS ---
         const handleRowPrint = (item) => { setInvoiceItem(item); setInvoiceNo(item.invoiceNo || ""); setInvoiceStep('input_no'); };
         const handleInvoiceNoSubmit = (e) => { e.preventDefault(); const u = { ...invoiceItem, invoiceNo: invoiceNo.toUpperCase() }; setInvoiceItem(u); setItems(prev => prev.map(i => i.id === u.id ? u : i)); setInvoiceStep('select_format'); };
         const handleInvoiceSkip = () => { setInvoiceNo(""); setInvoiceStep('select_format'); };
         const handleDownload = async (type) => { const el = document.getElementById('invoice-section'); if(!el) return; await new Promise(r => setTimeout(r, 100)); if(type === 'image'){ const c = await html2canvas(el, { scale: 2 }); const l = document.createElement('a'); l.download = `INV_${invoiceItem.id}.jpg`; l.href = c.toDataURL('image/jpeg'); l.click(); } else { const c = await html2canvas(el, { scale: 2 }); const img = c.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const w = pdf.internal.pageSize.getWidth(); const h = (c.height * w) / c.width; pdf.addImage(img, 'PNG', 0, 0, w, h); pdf.save(`INV_${invoiceItem.id}.pdf`); } handleCancel(); };
         const numberToWords = (price) => { const num = parseInt(price); if (num === 0) return "Zero Only"; return `INR ${num} Only`; };
         const handleEditClick = (item) => { const cats = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac']; const cat = cats.find(c => item[c] !== "-") || 'gkCash'; const price = item[cat] === "-" ? "0" : item[cat]; const [dp, tp] = item.dateTime.split(' '); const [d, m, y] = dp.split('/'); setEditingItem({ ...item, currentCategory: cat, currentPrice: item[cat] === "-" ? "0" : item[cat], editDate: `${y}-${m}-${d}`, editTime: tp }); };
-        const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); setItems(prev => prev.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; })); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
-        const handleDeleteFromEdit = () => { if(confirm("Delete?")) { setItems(prev => prev.filter(i => i.id !== editingItem.id)); setEditingItem(null); } };
+        const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); const updated = items.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; }); setItems(updated); saveToCloud(updated); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
+        const handleDeleteFromEdit = () => { if(confirm("Delete?")) { const updated = items.filter(i => i.id !== editingItem.id); setItems(updated); saveToCloud(updated); setEditingItem(null); } };
         const handlePrintFromEdit = () => { const it = items.find(i => i.id === editingItem.id); setEditingItem(null); handleRowPrint(it); };
         
         const handleEditSearchChange = (e) => {
@@ -718,7 +805,7 @@
 
                             {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-lg font-bold mb-1">UNKNOWN ITEM</h2><p className="text-xs text-slate-400 mb-2 font-mono">SCANNED: {currentScan?.srNo}</p>
                                 <input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="PRODUCT NAME" />
-                                <input type="text" value={productCodeInput} onChange={(e) => setProductCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="ITEM CODE (OPTIONAL)" />
+                                <input type="text" value={productCodeInput} onChange={(e) => setProductCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="ITEM CODE (OPTIONAL)" />
                                 <input type="text" value={productSerialInput} onChange={(e) => setProductSerialInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="SERIAL NUMBER" />
                                 <div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
                             
