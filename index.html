@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patil Communication - Cloud Inventory</title>
+    <title>Patil Inventory v3.0 (Stable)</title>
     
     <!-- React & Tailwind -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -21,8 +21,6 @@
     <style>
         body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -44,10 +42,7 @@
         .cube__face--bottom { transform: rotateX(-90deg) translateZ(60px); }
         @keyframes spinCube { 0% { transform: rotateX(0deg) rotateY(0deg); } 100% { transform: rotateX(360deg) rotateY(360deg); } }
         
-        /* Mobile Input Fix to prevent zoom */
         input, select, textarea { font-size: 16px !important; text-transform: uppercase; } 
-        
-        /* Sticky Header */
         .sticky-top-bar { position: sticky; top: 0; z-index: 40; background-color: #f1f5f9; padding-bottom: 0.5rem; }
 
         @media print {
@@ -64,14 +59,13 @@
 <div id="root"></div>
 <div id="reader-hidden" style="position: absolute; top: -10000px; left: -10000px;"></div>
 
-<!-- FIREBASE SDK (FIXED SCRIPT BLOCK) -->
+<!-- FIREBASE SDK -->
 <script type="module">
-    // We use version 10.7.1 consistently to match the imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Your web app's Firebase configuration
+    // YOUR CONFIGURATION
     const firebaseConfig = {
         apiKey: "AIzaSyD5m4XSQ9c05Arm4CJ5eGAwEIu7_AhoMbI",
         authDomain: "inventory-app-ce185.firebaseapp.com",
@@ -89,20 +83,18 @@
         auth = getAuth(app);
         db = getFirestore(app);
         appInitialized = true;
-        console.log("Firebase initialized successfully");
+        console.log("Firebase v3 initialized");
     } catch (e) {
         console.error("Firebase Init Failed:", e);
         alert("Firebase Setup Error: " + e.message);
     }
 
-    // App ID defines the specific document in Firestore to store data in
     const appId = 'patil-inventory-production-v1';
 
-    // Expose to window so React can use it
     window.firebaseApi = { 
         auth, db, appId, 
         signInAnonymously, onAuthStateChanged, 
-        doc, setDoc, getDoc, collection, onSnapshot, updateDoc,
+        doc, setDoc, onSnapshot,
         appInitialized
     };
 </script>
@@ -111,12 +103,12 @@
     const { useState, useEffect, useRef, useMemo } = React;
 
     const IntroAnimation = ({ onComplete }) => {
-        useEffect(() => { const t = setTimeout(onComplete, 2500); return () => clearTimeout(t); }, [onComplete]);
+        useEffect(() => { const t = setTimeout(onComplete, 2000); return () => clearTimeout(t); }, [onComplete]);
         return (
             <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center intro-container">
                 <div className="cube-scene"><div className="cube"><div className="cube__face cube__face--front"></div><div className="cube__face cube__face--back"></div><div className="cube__face cube__face--right"></div><div className="cube__face cube__face--left"></div><div className="cube__face cube__face--top"></div><div className="cube__face cube__face--bottom"></div></div></div>
-                <h1 className="text-4xl font-bold tracking-widest text-white mt-4 animate-pulse">PATIL.CLOUD</h1>
-                <div className="absolute bottom-8 text-xs text-red-800 tracking-widest uppercase opacity-60">Syncing...</div>
+                <h1 className="text-4xl font-bold tracking-widest text-white mt-4 animate-pulse">PATIL.V3</h1>
+                <div className="absolute bottom-8 text-xs text-red-800 tracking-widest uppercase opacity-60">Database Protected</div>
             </div>
         );
     };
@@ -127,7 +119,6 @@
         Download: (props) => <Icon {...props} p={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />,
         Search: (props) => <Icon {...props} p={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} />,
         Package: (props) => <Icon {...props} p={<><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>} />,
-        Check: (props) => <Icon {...props} p={<polyline points="20 6 9 17 4 12"/>} />,
         Calendar: (props) => <Icon {...props} p={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>} />,
         Filter: (props) => <Icon {...props} p={<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>} />,
         User: (props) => <Icon {...props} p={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />,
@@ -137,9 +128,7 @@
         Printer: (props) => <Icon {...props} p={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>} />,
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
         Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
-        Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
-        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />,
-        Camera: (props) => <Icon {...props} p={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>} />
+        Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />
     };
 
     const DEFAULT_SETTINGS = {
@@ -155,12 +144,12 @@
 
     function App() {
         const [showIntro, setShowIntro] = useState(true);
-        // We initialize with empty array, but data will load from Cloud immediately
         const [items, setItems] = useState([]);
         const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem('patil_settings') || JSON.stringify(DEFAULT_SETTINGS)));
         const [customDB, setCustomDB] = useState({});
         const [status, setStatus] = useState({ type: '', msg: '' });
         const [isCloudConnected, setIsCloudConnected] = useState(false);
+        const [user, setUser] = useState(null); 
         
         // Navigation & Workflow
         const [currentPage, setCurrentPage] = useState('home'); 
@@ -182,141 +171,115 @@
         const [customerNameInput, setCustomerNameInput] = useState("");
         const [customerMobileInput, setCustomerMobileInput] = useState("");
         const [priceInput, setPriceInput] = useState("");
-        
-        // Invoice
         const [invoiceStep, setInvoiceStep] = useState('idle'); 
         const [invoiceItem, setInvoiceItem] = useState(null);
         const [invoiceNo, setInvoiceNo] = useState("");
-
-        // Search & Filter
         const [searchDate, setSearchDate] = useState("");
         const [searchQuery, setSearchQuery] = useState("");
         const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
         const [adminSearch, setAdminSearch] = useState("");
         const [exportStartDate, setExportStartDate] = useState("");
         const [exportEndDate, setExportEndDate] = useState("");
-
-        // Admin Add Product
         const [newProdName, setNewProdName] = useState("");
         const [newProdCode, setNewProdCode] = useState("");
         const [newProdSerial, setNewProdSerial] = useState("");
         const [newProdRate, setNewProdRate] = useState("");
         const [editSuggestions, setEditSuggestions] = useState([]);
 
-        const [user, setUser] = useState(null); 
         const inputRef = useRef(null); 
         const fileInputRef = useRef(null);
         const dbInputRef = useRef(null); 
         const scannerRef = useRef(null);
         const isProcessingScan = useRef(false);
-
-        const modalRefs = {
-            product: useRef(null), manual: useRef(null), name: useRef(null), mobile: useRef(null), price: useRef(null), invoice: useRef(null)
-        };
+        const modalRefs = { product: useRef(null), manual: useRef(null), name: useRef(null), mobile: useRef(null), price: useRef(null), invoice: useRef(null) };
         const timeoutRef = useRef(null);
 
-        // --- FIREBASE SYNC (REAL TIME DATABASE) ---
+        // --- FIREBASE SYNC (SPLIT DOCUMENT STRATEGY) ---
         useEffect(() => {
             if (window.firebaseApi && window.firebaseApi.appInitialized) {
-                const { auth, signInAnonymously, onAuthStateChanged, db, doc, onSnapshot, setDoc, appId } = window.firebaseApi;
+                const { auth, signInAnonymously, onAuthStateChanged, db, doc, onSnapshot, appId } = window.firebaseApi;
                 
-                // 1. Authenticate anonymously
-                signInAnonymously(auth).then(() => {
-                    console.log("Signed in anonymously");
-                }).catch((error) => {
-                    console.error("Auth Error", error);
+                signInAnonymously(auth).catch(err => {
+                    console.error("Auth Fail", err);
                     setStatus({type: 'error', msg: 'Cloud Auth Failed'});
                 });
 
-                // 2. Listen for Auth State
                 const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
                     if (u) {
                         setUser(u);
                         setIsCloudConnected(true);
                         
-                        // 3. LISTEN TO DATABASE (Real-time Sync)
-                        // We store everything in one large document for simplicity in this free tier model
-                        // Path: artifacts -> {appId} -> data -> inventory
-                        const docRef = doc(db, 'artifacts', appId, 'data', 'inventory');
-                        
-                        const unsubDoc = onSnapshot(docRef, (snap) => {
+                        // 1. Listen to SALES Doc
+                        const unsubSales = onSnapshot(doc(db, 'artifacts', appId, 'data', 'sales'), (snap) => {
                             if (snap.exists()) {
-                                const data = snap.data();
-                                if(data.items) setItems(data.items);
-                                if(data.customDB) setCustomDB(data.customDB);
-                                if(data.settings) setSettings(data.settings); // Sync settings too
-                            } else {
-                                // First time init: Create the doc if it doesn't exist
-                                setDoc(docRef, { items: [], customDB: {}, settings: DEFAULT_SETTINGS }, { merge: true });
-                            }
-                        }, (err) => {
-                            console.error("Sync Error:", err);
-                            if (err.message && (err.message.includes("database (default) does not exist") || err.code === 'not-found')) {
-                                setStatus({type: 'error', msg: 'MISSING DB: Create Database in Firebase Console'});
-                                // Only alert once to avoid spamming
-                                if (!window.hasAlertedDBError) {
-                                    alert("ACTION REQUIRED:\n\nYour project is connected, but the Database is missing.\n\n1. Open console.firebase.google.com\n2. Go to 'Build' -> 'Firestore Database'\n3. Click 'Create Database'\n4. Select 'Start in Test Mode'");
-                                    window.hasAlertedDBError = true;
-                                }
-                            } else {
-                                setStatus({type: 'error', msg: 'Sync Error. Check Internet/Console.'});
+                                setItems(snap.data().items || []);
                             }
                         });
-                        return () => unsubDoc();
+
+                        // 2. Listen to STOCK Doc
+                        const unsubStock = onSnapshot(doc(db, 'artifacts', appId, 'data', 'stock'), (snap) => {
+                            if (snap.exists()) {
+                                setCustomDB(snap.data().customDB || {});
+                            }
+                        });
+
+                        // 3. Listen to SETTINGS Doc
+                        const unsubSettings = onSnapshot(doc(db, 'artifacts', appId, 'data', 'settings'), (snap) => {
+                            if (snap.exists()) {
+                                setSettings(snap.data().config || DEFAULT_SETTINGS);
+                            }
+                        });
+
+                        return () => { unsubSales(); unsubStock(); unsubSettings(); };
                     }
                 });
                 return () => unsubscribeAuth();
             }
         }, []);
 
-        // --- SAVE TO CLOUD FUNCTION ---
-        const saveToCloud = async (newItems, newDB, newSettings) => {
+        // --- EXPLICIT SAVE FUNCTIONS (NO AUTO SAVE) ---
+        
+        const saveSalesToCloud = async (newItems) => {
             if (user && window.firebaseApi && isCloudConnected) {
                 const { db, appId, doc, setDoc } = window.firebaseApi;
-                const docRef = doc(db, 'artifacts', appId, 'data', 'inventory');
-                
                 try {
-                    // We simply overwrite the arrays/objects with the latest version
-                    // In a production app with concurrent users, we would use arrayUnion, but for this use case,
-                    // "Last write wins" is acceptable and simplest to manage.
-                    await setDoc(docRef, {
-                        items: newItems || items,
-                        customDB: newDB || customDB,
-                        settings: newSettings || settings,
-                        lastUpdate: Date.now(),
-                        updatedBy: user.uid
+                    await setDoc(doc(db, 'artifacts', appId, 'data', 'sales'), { 
+                        items: newItems, 
+                        lastUpdate: Date.now() 
                     }, { merge: true });
-                } catch(e) { 
-                    console.warn("Cloud save failed", e); 
-                    setStatus({ type: 'error', msg: 'Save Failed (Check Internet)' });
-                }
-            } else {
-                setStatus({ type: 'error', msg: 'Offline: Changes not saved to Cloud' });
+                } catch(e) { console.error(e); setStatus({ type: 'error', msg: 'Save Sales Failed' }); }
             }
         };
 
-        // Persistence for Settings (Backup)
-        useEffect(() => localStorage.setItem('patil_settings', JSON.stringify(settings)), [settings]);
-
-        // Auto Focus Logic
-        useEffect(() => {
-            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product' && !isCameraOpen && !deleteConfirmation) {
-                if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
-                if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
-                if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
-                if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50);
-                if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50);
-                if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
+        const saveStockToCloud = async (newDB) => {
+            if (user && window.firebaseApi && isCloudConnected) {
+                const { db, appId, doc, setDoc } = window.firebaseApi;
+                try {
+                    setStatus({ type: 'info', msg: 'Uploading Stock...' });
+                    await setDoc(doc(db, 'artifacts', appId, 'data', 'stock'), { 
+                        customDB: newDB, 
+                        lastUpdate: Date.now() 
+                    }, { merge: true });
+                    setStatus({ type: 'success', msg: 'Stock Saved!' });
+                    setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                } catch(e) { console.error(e); setStatus({ type: 'error', msg: 'Save Stock Failed' }); }
             }
-            if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50);
-        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage, isCameraOpen, deleteConfirmation]);
+        };
 
-        // --- CORE LOGIC (Same as before, but calls saveToCloud) ---
+        const saveSettingsToCloud = async (newSettings) => {
+            if (user && window.firebaseApi && isCloudConnected) {
+                const { db, appId, doc, setDoc } = window.firebaseApi;
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'data', 'settings'), { config: newSettings }, { merge: true });
+                } catch(e) { console.error(e); }
+            }
+        };
+
+        // --- CORE ACTIONS ---
+
         const handleScan = (code) => {
             if(!code) return;
             const upCode = code.toUpperCase();
-            
-            // Check for Comma Separated (QR Code style)
             if (upCode.includes(',')) {
                 const clean = (s) => s.replace(/^(PROD|PRODUCT|NAME|SRNO|SN|SERIAL|CODE|ITEM|PRICE|RATE|MRP)[\s.:-]+/i, "").trim();
                 const parts = upCode.split(',').map(s => s.trim());
@@ -328,115 +291,24 @@
                     if(inputRef.current) inputRef.current.value = ""; return;
                 }
             }
-            
-            // Check Database
             let matches = [];
             if (customDB[upCode]) matches = Array.isArray(customDB[upCode]) ? customDB[upCode] : [customDB[upCode]];
-
             if (matches.length > 1) {
-                setMultipleMatches(matches.map(m => ({ ...m, srNo: upCode })));
-                setWorkflowStep('select_product');
+                setMultipleMatches(matches.map(m => ({ ...m, srNo: upCode }))); setWorkflowStep('select_product');
             } else if (matches.length === 1) {
                 const product = matches[0];
                 setCurrentScan({ desc: product.desc, code: product.code || upCode, srNo: upCode, rate: product.rate || 0, customerName: "", entryMethod: 'scan' });
-                setPriceInput(product.rate > 0 ? product.rate.toString() : ""); 
-                setCustomerNameInput(""); setWorkflowStep('customer_name');
+                setPriceInput(product.rate > 0 ? product.rate.toString() : ""); setCustomerNameInput(""); setWorkflowStep('customer_name');
             } else {
                 setCurrentScan({ code: "UNKNOWN", srNo: upCode, rate: 0, customerName: "", entryMethod: 'unknown' });
-                setProductNameInput(""); 
-                setProductCodeInput(""); 
-                setProductSerialInput(upCode); 
-                setWorkflowStep('product_name');
+                setProductNameInput(""); setProductCodeInput(""); setProductSerialInput(upCode); setWorkflowStep('product_name');
             }
             if(inputRef.current) inputRef.current.value = "";
         };
 
         const handleProductSelection = (product) => {
             setCurrentScan({ desc: product.desc, code: product.code, srNo: product.srNo || "N/A", rate: product.rate, customerName: "", entryMethod: 'scan' });
-            setPriceInput(product.rate > 0 ? product.rate.toString() : "");
-            setCustomerNameInput("");
-            setWorkflowStep('customer_name');
-        };
-
-        const startManualEntry = () => { setManualDescInput(""); setSuggestions([]); setWorkflowStep('manual_desc'); };
-        
-        const handleManualInputChange = (e) => {
-            const val = e.target.value.toUpperCase();
-            setManualDescInput(val);
-            if (val.length > 1) {
-                const matches = Object.entries(customDB).filter(([key, p]) => {
-                    const arr = Array.isArray(p) ? p : [p];
-                    return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val));
-                }).slice(0, 8).map(([key, val]) => {
-                     const item = Array.isArray(val) ? val[0] : val;
-                     return { ...item, barcode: key };
-                });
-                setSuggestions(matches);
-            } else { setSuggestions([]); }
-        };
-
-        const selectSuggestion = (product) => {
-            setCurrentScan({ 
-                desc: product.desc, code: product.code, srNo: product.barcode, rate: product.rate, customerName: "", entryMethod: 'manual' 
-            });
-            setPriceInput(product.rate > 0 ? product.rate.toString() : "");
-            setCustomerNameInput(""); setSuggestions([]); setWorkflowStep('customer_name');
-        };
-
-        const handleManualDescSubmit = (e) => { 
-            e.preventDefault(); 
-            setCurrentScan({ desc: manualDescInput.trim() || "MANUAL ITEM", rate: 0, customerName: "", entryMethod: 'manual' });
-            setProductNameInput(manualDescInput.trim()); 
-            setProductCodeInput(""); 
-            setProductSerialInput("");
-            setWorkflowStep('product_name'); 
-        };
-
-        const handleProductNameSubmit = (e) => { 
-            e.preventDefault(); 
-            const name = productNameInput.trim().toUpperCase() || "UNKNOWN"; 
-            const code = productCodeInput.trim().toUpperCase() || "N/A";
-            const serial = productSerialInput.trim().toUpperCase();
-            
-            setCurrentScan(prev => ({ ...prev, desc: name, code: code, srNo: serial })); 
-            
-            if(serial && serial !== "MANUAL") {
-                const newEntry = { desc: name, code: code, rate: 0 }; 
-                const key = serial;
-                const newDB = { ...customDB };
-                if (newDB[key]) {
-                    if (Array.isArray(newDB[key])) newDB[key].push(newEntry);
-                    else newDB[key] = [newDB[key], newEntry];
-                } else {
-                    newDB[key] = [newEntry];
-                }
-                setCustomDB(newDB);
-                saveToCloud(items, newDB); 
-                setStatus({ type: 'success', msg: 'Added to Database' });
-            }
-            setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); 
-        };
-
-        const handleCustomerNameSubmit = (e) => { e.preventDefault(); const name = customerNameInput.trim().toUpperCase(); if(name) { setCurrentScan(prev => ({ ...prev, tempName: name })); setCustomerMobileInput(""); setWorkflowStep('customer_mobile'); } else { handleCustomerSkip(); } };
-        const handleCustomerSkip = () => { setCurrentScan(prev => ({ ...prev, customerName: "" })); setWorkflowStep('price'); };
-        const handleCustomerMobileSubmit = (e) => { e.preventDefault(); const mobile = customerMobileInput.trim(); const name = currentScan.tempName; const fullName = mobile ? `${name} (${mobile})` : name; setCurrentScan(prev => ({ ...prev, customerName: fullName })); setWorkflowStep('price'); };
-        
-        const handlePriceSubmit = (e) => { 
-            e.preventDefault(); 
-            const price = parseFloat(priceInput); 
-            if (!price || isNaN(price)) { alert("Invalid price"); return; } 
-            
-            if(currentScan.srNo && currentScan.entryMethod === 'unknown' && customDB[currentScan.srNo]) {
-                const newDB = { ...customDB };
-                const arr = newDB[currentScan.srNo];
-                if (Array.isArray(arr)) {
-                   const target = arr.find(p => p.desc === currentScan.desc && p.code === currentScan.code && p.rate === 0);
-                   if(target) target.rate = price;
-                }
-                setCustomDB(newDB);
-                saveToCloud(items, newDB); 
-            }
-            setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); 
+            setPriceInput(product.rate > 0 ? product.rate.toString() : ""); setCustomerNameInput(""); setWorkflowStep('customer_name');
         };
 
         const handleCategorySelect = (categoryKey) => {
@@ -453,71 +325,9 @@
             newItem[categoryKey] = price;
             const updatedItems = [newItem, ...items];
             setItems(updatedItems);
-            saveToCloud(updatedItems); 
+            saveSalesToCloud(updatedItems); 
             setStatus({ type: 'success', msg: `Saved to ${categoryKey}` }); 
             handleCancel(); 
-        };
-
-        const handleCancel = () => {
-            setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput("");
-            setInvoiceStep('idle'); setInvoiceItem(null); setInvoiceNo(""); setExportModalOpen(false); setMultipleMatches([]); setIsCameraOpen(false);
-            if(inputRef.current) inputRef.current.focus();
-        };
-
-        const handleBack = () => {
-            switch (workflowStep) {
-                case 'category': setWorkflowStep('price'); break;
-                case 'price': setWorkflowStep('customer_mobile'); break;
-                case 'customer_mobile': setWorkflowStep('customer_name'); break;
-                case 'customer_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('product_name'); else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name'); else handleCancel(); break;
-                case 'product_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc'); else handleCancel(); break;
-                case 'manual_desc': case 'select_product': handleCancel(); break;
-                default: handleCancel();
-            }
-        };
-
-        const handleScanInput = (e) => { const val = e.target.value.toUpperCase(); if (timeoutRef.current) clearTimeout(timeoutRef.current); timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300); };
-        const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim().toUpperCase());
-        
-        const handleImageUpload = (e) => { 
-            const f = e.target.files[0]; 
-            if (!f) return; 
-            try {
-                const html5QrCode = new Html5Qrcode("reader-hidden"); 
-                setStatus({ type: 'info', msg: 'Scanning Image...' }); 
-                html5QrCode.scanFile(f, true)
-                    .then(decodedText => {
-                        handleScan(decodedText.toUpperCase());
-                        html5QrCode.clear();
-                    })
-                    .catch((err) => {
-                        setStatus({ type: 'error', msg: 'No code found' });
-                        html5QrCode.clear(); 
-                    });
-            } catch (err) {
-                setStatus({ type: 'error', msg: 'Scanner Init Failed' });
-            }
-            e.target.value = ''; 
-        };
-
-        const handleExportClick = () => setExportModalOpen(true);
-        const exportData = (dataSubset) => {
-            if (dataSubset.length === 0) { alert("No data to export for selected range."); return; }
-            const headers = ["Date & Time", "Customer", "Product", "Code", "Sr. No", "GK Cash", "GK Bank", "UN GST Cash", "UN Non GST Cash", "UN 1 A/C", "UN 2 A/C"];
-            const rows = dataSubset.map(i => [`"${i.dateTime}"`, `"${i.customer}"`, `"${i.desc}"`, i.code, i.srNo, i.gkCash, i.gkBank, i.unGstCash, i.unNonGstCash, i.un1ac, i.un2ac]);
-            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-            const b = new Blob([csv], { type: 'text/csv' }); const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `INVENTORY_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; document.body.appendChild(l); l.click(); document.body.removeChild(l);
-            setExportModalOpen(false);
-        };
-        const exportToday = () => {
-            const today = new Date().toISOString().split('T')[0];
-            const subset = items.filter(i => i.rawDate === today);
-            exportData(subset);
-        };
-        const exportRange = () => {
-            if(!exportStartDate || !exportEndDate) { alert("Select both dates"); return; }
-            const subset = items.filter(i => i.rawDate >= exportStartDate && i.rawDate <= exportEndDate);
-            exportData(subset);
         };
 
         const handleDbImport = (e) => {
@@ -549,48 +359,9 @@
                     }
                 });
                 setCustomDB(newEntries); 
-                saveToCloud(items, newEntries); 
-                setStatus({ type: 'success', msg: `Imported ${count} Items` }); 
-                setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+                saveStockToCloud(newEntries); 
             };
             if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) reader.readAsBinaryString(file); else reader.readAsText(file); e.target.value = '';
-        };
-
-        const handleDeleteEntry = (itemId) => { setDeleteConfirmation({ type: 'entry', id: itemId }); };
-        const handleDeleteFromEdit = () => { if(editingItem) setDeleteConfirmation({ type: 'edit' }); };
-        const handleAdminDeleteStock = (key, index) => { setDeleteConfirmation({ type: 'stock', key, index }); };
-
-        const executeDelete = () => {
-            if (!deleteConfirmation) return;
-            const { type, id, key, index } = deleteConfirmation;
-
-            if (type === 'entry') {
-                const updated = items.filter(i => i.id !== id);
-                setItems(updated);
-                saveToCloud(updated);
-                setStatus({ type: 'success', msg: 'Deleted Successfully' });
-            } else if (type === 'edit') {
-                 if (editingItem) {
-                    const updated = items.filter(i => i.id !== editingItem.id);
-                    setItems(updated);
-                    saveToCloud(updated);
-                    setEditingItem(null); 
-                    setStatus({ type: 'success', msg: 'Deleted Successfully' });
-                 }
-            } else if (type === 'stock') {
-                const newDB = { ...customDB };
-                const entry = newDB[key];
-                if(Array.isArray(entry)) {
-                    const newArr = entry.filter((_, i) => i !== index);
-                    if(newArr.length === 0) delete newDB[key];
-                    else newDB[key] = newArr;
-                } else { delete newDB[key]; }
-                setCustomDB(newDB);
-                saveToCloud(items, newDB); 
-                setStatus({ type: 'success', msg: 'Stock Item Deleted' });
-            }
-            setDeleteConfirmation(null);
-            setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
         };
 
         const handleAdminAddProduct = (e) => {
@@ -604,105 +375,80 @@
             const product = { desc: name, code, rate };
             if (newDB[serial]) { if (Array.isArray(newDB[serial])) newDB[serial].push(product); else newDB[serial] = [newDB[serial], product]; } else { newDB[serial] = [product]; }
             setCustomDB(newDB); 
-            saveToCloud(items, newDB); 
-            setNewProdName(""); setNewProdCode(""); setNewProdSerial(""); setNewProdRate(""); setStatus({ type: 'success', msg: 'Product Added to Stock!' }); setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
+            saveStockToCloud(newDB); 
+            setNewProdName(""); setNewProdCode(""); setNewProdSerial(""); setNewProdRate(""); 
         };
 
-        const handleDownloadStock = () => {
-            const rows = [];
-            rows.push(["Serial/Barcode", "Product Name", "Item Code", "Rate"]);
-            Object.entries(customDB).forEach(([key, val]) => {
-                const arr = Array.isArray(val) ? val : [val];
-                arr.forEach(p => rows.push([key, p.desc, p.code, p.rate]));
-            });
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(rows);
-            XLSX.utils.book_append_sheet(wb, ws, "Stock");
-            XLSX.writeFile(wb, "stock all.xlsx");
+        const executeDelete = () => {
+            if (!deleteConfirmation) return;
+            const { type, id, key, index } = deleteConfirmation;
+            if (type === 'entry') {
+                const updated = items.filter(i => i.id !== id);
+                setItems(updated);
+                saveSalesToCloud(updated);
+            } else if (type === 'edit') {
+                 if (editingItem) {
+                    const updated = items.filter(i => i.id !== editingItem.id);
+                    setItems(updated);
+                    saveSalesToCloud(updated);
+                    setEditingItem(null); 
+                 }
+            } else if (type === 'stock') {
+                const newDB = { ...customDB };
+                const entry = newDB[key];
+                if(Array.isArray(entry)) {
+                    const newArr = entry.filter((_, i) => i !== index);
+                    if(newArr.length === 0) delete newDB[key]; else newDB[key] = newArr;
+                } else { delete newDB[key]; }
+                setCustomDB(newDB);
+                saveStockToCloud(newDB); 
+            }
+            setDeleteConfirmation(null);
         };
 
+        const handleSaveSettings = () => { setIsSettingsOpen(false); saveSettingsToCloud(settings); };
+        
+        // --- BOILERPLATE HANDLERS (Simpler ones) ---
+        const startManualEntry = () => { setManualDescInput(""); setSuggestions([]); setWorkflowStep('manual_desc'); };
+        const handleManualInputChange = (e) => { const val = e.target.value.toUpperCase(); setManualDescInput(val); if (val.length > 1) { const matches = Object.entries(customDB).filter(([key, p]) => { const arr = Array.isArray(p) ? p : [p]; return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val)); }).slice(0, 8).map(([key, val]) => { const item = Array.isArray(val) ? val[0] : val; return { ...item, barcode: key }; }); setSuggestions(matches); } else { setSuggestions([]); } };
+        const selectSuggestion = (product) => { setCurrentScan({ desc: product.desc, code: product.code, srNo: product.barcode, rate: product.rate, customerName: "", entryMethod: 'manual' }); setPriceInput(product.rate > 0 ? product.rate.toString() : ""); setCustomerNameInput(""); setSuggestions([]); setWorkflowStep('customer_name'); };
+        const handleManualDescSubmit = (e) => { e.preventDefault(); setCurrentScan({ desc: manualDescInput.trim() || "MANUAL ITEM", rate: 0, customerName: "", entryMethod: 'manual' }); setProductNameInput(manualDescInput.trim()); setProductCodeInput(""); setProductSerialInput(""); setWorkflowStep('product_name'); };
+        const handleProductNameSubmit = (e) => { e.preventDefault(); const name = productNameInput.trim().toUpperCase() || "UNKNOWN"; const code = productCodeInput.trim().toUpperCase() || "N/A"; const serial = productSerialInput.trim().toUpperCase(); setCurrentScan(prev => ({ ...prev, desc: name, code: code, srNo: serial })); if(serial && serial !== "MANUAL") { const newEntry = { desc: name, code: code, rate: 0 }; const key = serial; const newDB = { ...customDB }; if (newDB[key]) { if (Array.isArray(newDB[key])) newDB[key].push(newEntry); else newDB[key] = [newDB[key], newEntry]; } else { newDB[key] = [newEntry]; } setCustomDB(newDB); saveStockToCloud(newDB); } setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); };
+        const handleCustomerNameSubmit = (e) => { e.preventDefault(); const name = customerNameInput.trim().toUpperCase(); if(name) { setCurrentScan(prev => ({ ...prev, tempName: name })); setCustomerMobileInput(""); setWorkflowStep('customer_mobile'); } else { handleCustomerSkip(); } };
+        const handleCustomerSkip = () => { setCurrentScan(prev => ({ ...prev, customerName: "" })); setWorkflowStep('price'); };
+        const handleCustomerMobileSubmit = (e) => { e.preventDefault(); const mobile = customerMobileInput.trim(); const name = currentScan.tempName; const fullName = mobile ? `${name} (${mobile})` : name; setCurrentScan(prev => ({ ...prev, customerName: fullName })); setWorkflowStep('price'); };
+        const handlePriceSubmit = (e) => { e.preventDefault(); const price = parseFloat(priceInput); if (!price || isNaN(price)) { alert("Invalid price"); return; } if(currentScan.srNo && currentScan.entryMethod === 'unknown' && customDB[currentScan.srNo]) { const newDB = { ...customDB }; const arr = newDB[currentScan.srNo]; if (Array.isArray(arr)) { const target = arr.find(p => p.desc === currentScan.desc && p.code === currentScan.code && p.rate === 0); if(target) target.rate = price; } setCustomDB(newDB); saveStockToCloud(newDB); } setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); };
+        const handleCancel = () => { setWorkflowStep('idle'); setCurrentScan(null); setPriceInput(""); setCustomerNameInput(""); setCustomerMobileInput(""); setInvoiceStep('idle'); setInvoiceItem(null); setInvoiceNo(""); setExportModalOpen(false); setMultipleMatches([]); setIsCameraOpen(false); if(inputRef.current) inputRef.current.focus(); };
+        const handleBack = () => { switch (workflowStep) { case 'category': setWorkflowStep('price'); break; case 'price': setWorkflowStep('customer_mobile'); break; case 'customer_mobile': setWorkflowStep('customer_name'); break; case 'customer_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('product_name'); else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name'); else handleCancel(); break; case 'product_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc'); else handleCancel(); break; case 'manual_desc': case 'select_product': handleCancel(); break; default: handleCancel(); } };
+        const handleScanInput = (e) => { const val = e.target.value.toUpperCase(); if (timeoutRef.current) clearTimeout(timeoutRef.current); timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300); };
+        const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim().toUpperCase());
+        const handleImageUpload = (e) => { const f = e.target.files[0]; if (!f) return; try { const html5QrCode = new Html5Qrcode("reader-hidden"); setStatus({ type: 'info', msg: 'Scanning Image...' }); html5QrCode.scanFile(f, true).then(decodedText => { handleScan(decodedText.toUpperCase()); html5QrCode.clear(); }).catch((err) => { setStatus({ type: 'error', msg: 'No code found' }); html5QrCode.clear(); }); } catch (err) { setStatus({ type: 'error', msg: 'Scanner Init Failed' }); } e.target.value = ''; };
+        const handleExportClick = () => setExportModalOpen(true);
+        const exportData = (dataSubset) => { if (dataSubset.length === 0) { alert("No data to export for selected range."); return; } const headers = ["Date & Time", "Customer", "Product", "Code", "Sr. No", "GK Cash", "GK Bank", "UN GST Cash", "UN Non GST Cash", "UN 1 A/C", "UN 2 A/C"]; const rows = dataSubset.map(i => [`"${i.dateTime}"`, `"${i.customer}"`, `"${i.desc}"`, i.code, i.srNo, i.gkCash, i.gkBank, i.unGstCash, i.unNonGstCash, i.un1ac, i.un2ac]); const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n"); const b = new Blob([csv], { type: 'text/csv' }); const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `INVENTORY_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; document.body.appendChild(l); l.click(); document.body.removeChild(l); setExportModalOpen(false); };
+        const exportToday = () => { const today = new Date().toISOString().split('T')[0]; const subset = items.filter(i => i.rawDate === today); exportData(subset); };
+        const exportRange = () => { if(!exportStartDate || !exportEndDate) { alert("Select both dates"); return; } const subset = items.filter(i => i.rawDate >= exportStartDate && i.rawDate <= exportEndDate); exportData(subset); };
+        const handleDeleteEntry = (itemId) => { setDeleteConfirmation({ type: 'entry', id: itemId }); };
+        const handleDeleteFromEdit = () => { if(editingItem) setDeleteConfirmation({ type: 'edit' }); };
+        const handleAdminDeleteStock = (key, index) => { setDeleteConfirmation({ type: 'stock', key, index }); };
+        const handleDownloadStock = () => { const rows = []; rows.push(["Serial/Barcode", "Product Name", "Item Code", "Rate"]); Object.entries(customDB).forEach(([key, val]) => { const arr = Array.isArray(val) ? val : [val]; arr.forEach(p => rows.push([key, p.desc, p.code, p.rate])); }); const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); XLSX.utils.book_append_sheet(wb, ws, "Stock"); XLSX.writeFile(wb, "stock all.xlsx"); };
         const handleRowPrint = (item) => { setInvoiceItem(item); setInvoiceNo(item.invoiceNo || ""); setInvoiceStep('input_no'); };
         const handleInvoiceNoSubmit = (e) => { e.preventDefault(); const u = { ...invoiceItem, invoiceNo: invoiceNo.toUpperCase() }; setInvoiceItem(u); setItems(prev => prev.map(i => i.id === u.id ? u : i)); setInvoiceStep('select_format'); };
         const handleInvoiceSkip = () => { setInvoiceNo(""); setInvoiceStep('select_format'); };
         const handleDownload = async (type) => { const el = document.getElementById('invoice-section'); if(!el) return; await new Promise(r => setTimeout(r, 100)); if(type === 'image'){ const c = await html2canvas(el, { scale: 2 }); const l = document.createElement('a'); l.download = `INV_${invoiceItem.id}.jpg`; l.href = c.toDataURL('image/jpeg'); l.click(); } else { const c = await html2canvas(el, { scale: 2 }); const img = c.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const w = pdf.internal.pageSize.getWidth(); const h = (c.height * w) / c.width; pdf.addImage(img, 'PNG', 0, 0, w, h); pdf.save(`INV_${invoiceItem.id}.pdf`); } handleCancel(); };
         const numberToWords = (price) => { const num = parseInt(price); if (num === 0) return "Zero Only"; return `INR ${num} Only`; };
         const handleEditClick = (item) => { const cats = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac']; const cat = cats.find(c => item[c] !== "-") || 'gkCash'; const price = item[cat] === "-" ? "0" : item[cat]; const [dp, tp] = item.dateTime.split(' '); const [d, m, y] = dp.split('/'); setEditingItem({ ...item, currentCategory: cat, currentPrice: item[cat] === "-" ? "0" : item[cat], editDate: `${y}-${m}-${d}`, editTime: tp }); };
-        const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); const updated = items.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; }); setItems(updated); saveToCloud(updated); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
+        const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); const updated = items.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; }); setItems(updated); saveSalesToCloud(updated); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
         const handlePrintFromEdit = () => { const it = items.find(i => i.id === editingItem.id); setEditingItem(null); handleRowPrint(it); };
-        
-        const handleEditSearchChange = (e) => {
-            const val = e.target.value.toUpperCase();
-            setEditingItem(prev => ({ ...prev, desc: val }));
-            if (val.length > 1) {
-                const matches = Object.entries(customDB).filter(([key, p]) => {
-                    const arr = Array.isArray(p) ? p : [p];
-                    return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val));
-                }).slice(0, 8).map(([key, val]) => {
-                     const item = Array.isArray(val) ? val[0] : val;
-                     return { ...item, barcode: key };
-                });
-                setEditSuggestions(matches);
-            } else { setEditSuggestions([]); }
-        };
-        const applyEditProduct = (product) => {
-             setEditingItem(prev => ({
-                ...prev, desc: product.desc, code: product.code || prev.code, srNo: product.barcode || prev.srNo, currentPrice: product.rate || prev.currentPrice
-            }));
-            setEditSuggestions([]);
-        };
-        
-        const handleSaveSettings = () => {
-            setIsSettingsOpen(false);
-            // Save settings to cloud
-            saveToCloud(null, null, settings);
-        };
-
-        const filteredStock = Object.entries(customDB).filter(([key, val]) => {
-            if(!adminSearch) return true;
-            const search = adminSearch.toUpperCase();
-            if (key.includes(search)) return true;
-            const arr = Array.isArray(val) ? val : [val];
-            return arr.some(p => p.desc.includes(search) || p.code.includes(search));
-        });
-
-        const filteredItems = useMemo(() => { 
-            let d = items.filter(i => { const md = searchDate ? i.rawDate === searchDate : true; const q = searchQuery.toUpperCase(); return md && (searchQuery ? JSON.stringify(i).toUpperCase().includes(q) : true); }); 
-            if (sortConfig.key) { 
-                d.sort((a, b) => { 
-                    let va = parseFloat(a[sortConfig.key]) || 0; 
-                    let vb = parseFloat(b[sortConfig.key]) || 0; 
-                    return sortConfig.direction === 'ascending' ? va - vb : vb - va; 
-                }); 
-            } 
-            return d; 
-        }, [items, searchDate, searchQuery, sortConfig]);
-
+        const handleEditSearchChange = (e) => { const val = e.target.value.toUpperCase(); setEditingItem(prev => ({ ...prev, desc: val })); if (val.length > 1) { const matches = Object.entries(customDB).filter(([key, p]) => { const arr = Array.isArray(p) ? p : [p]; return arr.some(item => (item.desc && item.desc.toUpperCase().includes(val)) || key.toUpperCase().includes(val)); }).slice(0, 8).map(([key, val]) => { const item = Array.isArray(val) ? val[0] : val; return { ...item, barcode: key }; }); setEditSuggestions(matches); } else { setEditSuggestions([]); } };
+        const applyEditProduct = (product) => { setEditingItem(prev => ({ ...prev, desc: product.desc, code: product.code || prev.code, srNo: product.barcode || prev.srNo, currentPrice: product.rate || prev.currentPrice })); setEditSuggestions([]); };
+        const filteredStock = Object.entries(customDB).filter(([key, val]) => { if(!adminSearch) return true; const search = adminSearch.toUpperCase(); if (key.includes(search)) return true; const arr = Array.isArray(val) ? val : [val]; return arr.some(p => p.desc.includes(search) || p.code.includes(search)); });
+        const filteredItems = useMemo(() => { let d = items.filter(i => { const md = searchDate ? i.rawDate === searchDate : true; const q = searchQuery.toUpperCase(); return md && (searchQuery ? JSON.stringify(i).toUpperCase().includes(q) : true); }); if (sortConfig.key) { d.sort((a, b) => { let va = parseFloat(a[sortConfig.key]) || 0; let vb = parseFloat(b[sortConfig.key]) || 0; return sortConfig.direction === 'ascending' ? va - vb : vb - va; }); } return d; }, [items, searchDate, searchQuery, sortConfig]);
         const totalSales = useMemo(() => filteredItems.reduce((acc, i) => { const v = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(i[k]) || 0).reduce((a, b) => a + b, 0); return acc + v; }, 0), [filteredItems]);
         const requestSort = (key) => setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'ascending' ? 'descending' : 'ascending' });
         const getSortClass = (key) => sortConfig.key === key ? (sortConfig.direction === 'ascending' ? 'sort-asc' : 'sort-desc') : 'sort-icon';
-
-        const startLiveScan = () => {
-            setIsCameraOpen(true);
-            isProcessingScan.current = false;
-            setTimeout(() => {
-                const html5QrCode = new Html5Qrcode("reader-live");
-                scannerRef.current = html5QrCode;
-                const config = { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: window.innerWidth / window.innerHeight };
-                html5QrCode.start({ facingMode: "environment" }, config, 
-                    (decodedText) => {
-                        if (isProcessingScan.current) return;
-                        isProcessingScan.current = true;
-                        handleScan(decodedText);
-                        stopLiveScan();
-                    },
-                    (errorMessage) => { }
-                ).catch(err => {
-                    setStatus({ type: 'error', msg: 'Camera Error' });
-                    setIsCameraOpen(false);
-                });
-            }, 300);
-        };
+        const startLiveScan = () => { setIsCameraOpen(true); isProcessingScan.current = false; setTimeout(() => { const html5QrCode = new Html5Qrcode("reader-live"); scannerRef.current = html5QrCode; const config = { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: window.innerWidth / window.innerHeight }; html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => { if (isProcessingScan.current) return; isProcessingScan.current = true; handleScan(decodedText); stopLiveScan(); }, (errorMessage) => { } ).catch(err => { setStatus({ type: 'error', msg: 'Camera Error' }); setIsCameraOpen(false); }); }, 300); };
         const stopLiveScan = () => { if (scannerRef.current) { scannerRef.current.stop().then(() => { scannerRef.current.clear(); setIsCameraOpen(false); }).catch(() => setIsCameraOpen(false)); } else { setIsCameraOpen(false); } };
+        useEffect(() => { if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product' && !isCameraOpen && !deleteConfirmation) { if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus(); if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50); if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50); if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50); if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50); if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50); } if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50); }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage, isCameraOpen, deleteConfirmation]);
 
         if (showIntro) return <IntroAnimation onComplete={() => setShowIntro(false)} />;
 
@@ -714,7 +460,6 @@
                             <h1 className="text-3xl font-bold text-slate-800">ADMIN PANEL</h1>
                             <button onClick={() => setCurrentPage('home')} className="bg-slate-600 text-white px-4 py-2 rounded-lg font-bold uppercase hover:bg-slate-700">Back</button>
                         </div>
-                        
                         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
                             <h2 className="text-xl font-bold mb-4 border-b pb-2">ADD NEW STOCK</h2>
                             <form onSubmit={handleAdminAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -725,7 +470,6 @@
                                 <button type="submit" className="bg-green-600 text-white font-bold py-3 rounded md:col-span-2 hover:bg-green-700 shadow">ADD TO DATABASE</button>
                             </form>
                         </div>
-
                         <div className="bg-white rounded-xl shadow-lg p-6">
                             <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                                 <h2 className="text-xl font-bold">CURRENT STOCK ({Object.keys(customDB).length})</h2>
@@ -757,7 +501,6 @@
                         </div>
                     </div>
                     {status.msg && <div className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded shadow-lg">{status.msg}</div>}
-                    
                     {deleteConfirmation && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center modal-overlay p-4">
                             <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
@@ -776,10 +519,8 @@
 
         return (
             <div className="min-h-screen font-sans text-slate-800 p-2 md:p-8 bg-slate-50 relative uppercase pb-20">
-                {/* Invoice Hidden Template */}
                 {invoiceItem && (<div id="invoice-container"><div id="invoice-section" className="w-[210mm] bg-white p-8 text-black relative"><div className="text-center font-bold text-xs uppercase mb-2 border-b pb-2">Subject to Kolhapur Jurisdiction</div><div className="flex justify-between items-start mb-6"><div><div className="text-sm font-bold">Invoice No. {invoiceNo || "_______"}</div></div><div className="text-center"><h1 className="text-xl font-bold uppercase">{settings.name}</h1><p className="text-xs whitespace-pre-line">{settings.address}</p><p className="text-xs font-bold mt-1">Contact: {settings.contact}</p><p className="text-xs">GSTIN/UIN: {settings.gstin}</p><p className="text-xs">Email: {settings.email}</p></div><div className="text-right text-sm">Dated: {new Date().toLocaleDateString()}</div></div><h2 className="text-center font-bold text-lg mb-4 underline">TAX INVOICE</h2><div className="mb-4"><p className="font-bold">Party : {invoiceItem.customer}</p><p className="text-sm">State Name : Maharashtra, Code : 27</p></div><table className="w-full border-collapse border border-black text-xs mb-4"><thead><tr className="bg-gray-100"><th className="border border-black p-1 w-10">Sl</th><th className="border border-black p-1">Description</th><th className="border border-black p-1 w-16">HSN</th><th className="border border-black p-1 w-16">Qty</th><th className="border border-black p-1 w-20">Rate</th><th className="border border-black p-1 w-12">per</th><th className="border border-black p-1 w-24">Amount</th></tr></thead><tbody><tr><td className="border border-black p-1 text-center">1</td><td className="border border-black p-1 font-bold">{invoiceItem.desc}<br/><span className="font-normal italic text-[10px]">Batch: {invoiceItem.srNo} | Code: {invoiceItem.code}</span><div className="mt-4 text-right pr-4">CGST 9%</div><div className="text-right pr-4">SGST 9%</div></td><td className="border border-black p-1 text-center">8517</td><td className="border border-black p-1 text-center font-bold">1 Nos</td><td className="border border-black p-1 text-right">{(() => { const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0); return (total/1.18).toFixed(2); })()}</td><td className="border border-black p-1 text-center">Nos</td><td className="border border-black p-1 text-right font-bold align-top">{(() => { const total = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0); const basic = total/1.18; const tax = total - basic; const halfTax = tax/2; return (<><div>{basic.toFixed(2)}</div><div className="mt-4">{halfTax.toFixed(2)}</div><div>{halfTax.toFixed(2)}</div></>); })()}</td></tr><tr className="font-bold"><td colSpan="3" className="border border-black p-1 text-right">Total</td><td className="border border-black p-1 text-center">1 Nos</td><td colSpan="2" className="border border-black p-1"></td><td className="border border-black p-1 text-right">₹ {['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0).toFixed(2)}</td></tr></tbody></table><div className="border border-black p-2 text-xs mb-2"><span className="font-bold">Amount Chargeable (in words):</span> <br/><span className="font-bold text-sm uppercase">{numberToWords(['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(invoiceItem[k]) || 0).reduce((a,b)=>a+b,0))}</span></div><div className="flex text-xs mb-4"><div className="w-1/2 border border-black p-2 mr-2"><p className="font-bold underline mb-1">Company's Bank Details</p><p>Bank Name : {settings.bankName}</p><p>A/c No. : {settings.acNo}</p><p>Branch & IFS : {settings.ifsc}</p></div><div className="w-1/2 border border-black p-2 flex flex-col justify-between text-right"><p className="font-bold">for {settings.name}</p><br/><br/><p>Authorised Signatory</p></div></div><div className="text-[10px]"><p className="font-bold underline">Declaration</p><ol className="list-decimal pl-4"><li>Goods once sold will not be taken back.</li><li>Interest @ 24% p.a. will be charged if payment is not made within due date.</li><li>Subject to Kolhapur Jurisdiction only.</li></ol></div><div className="text-center border-t mt-4 pt-1 text-[10px]">This is a Computer Generated Invoice</div></div></div>)}
 
-                {/* HEADER */}
                 <header className="sticky-top-bar max-w-full mx-auto mb-4 flex flex-col md:flex-row justify-between items-center gap-4 no-print shadow-sm z-30">
                     <div className="w-full flex justify-between items-center md:block">
                         <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -806,7 +547,6 @@
                 </header>
 
                 <main className="max-w-full mx-auto no-print">
-                    {/* INPUT ROW */}
                     <div className="bg-white rounded-xl shadow-lg border-2 border-blue-500 p-3 mb-4 flex flex-col md:flex-row gap-2">
                         <div className="relative flex-1 w-full">
                             <input ref={inputRef} type="text" onChange={handleScanInput} onKeyDown={handleScanKeyDown} className="w-full pl-10 pr-2 py-3 text-lg border rounded-lg focus:border-blue-500 focus:shadow-lg transition-all" placeholder="SCAN..." disabled={workflowStep !== 'idle'} autoFocus />
@@ -821,7 +561,6 @@
 
                     {status.msg && <div className={`mb-3 p-2 rounded font-bold text-center text-sm ${status.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{status.msg}</div>}
 
-                    {/* FILTER & EXPORT */}
                     <div className="bg-slate-200 p-2 rounded-xl mb-3 flex flex-col md:flex-row gap-2 items-center justify-between">
                         <div className="flex gap-2 w-full md:w-auto flex-1">
                             <div className="relative flex-1 bg-white rounded p-1 flex items-center"><Icons.Calendar className="w-4 h-4 mr-1 text-slate-400"/><input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} className="bg-transparent outline-none text-sm w-full"/></div>
@@ -830,7 +569,6 @@
                         <button onClick={handleExportClick} className="w-full md:w-auto bg-slate-800 text-white px-4 py-2 rounded font-bold flex items-center justify-center gap-2 shadow-md text-sm"><Icons.Download className="w-4 h-4" /> EXPORT EXCEL</button>
                     </div>
 
-                    {/* TABLE */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[1000px]">
@@ -873,8 +611,6 @@
                     </div>
                 </main>
 
-                {/* --- MODALS --- */}
-                
                 {deleteConfirmation && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center modal-overlay p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
@@ -888,41 +624,26 @@
                     </div>
                 )}
 
-                {/* WORKFLOW MODALS */}
                 {(['manual_desc', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category', 'select_product'].includes(workflowStep)) && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-sm relative max-h-[85vh] overflow-y-auto w-[95%] mx-auto">
                             <button onClick={handleCancel} className="absolute top-3 right-3 text-slate-400 p-2"><Icons.X className="w-6 h-6" /></button>
-                            
                             {workflowStep === 'manual_desc' && <form onSubmit={handleManualDescSubmit}>
                                 <h2 className="text-lg font-bold mb-3">PRODUCT NAME</h2>
                                 <input ref={modalRefs.manual} type="text" value={manualDescInput} onChange={handleManualInputChange} className="w-full border rounded p-4 mb-2 text-lg uppercase" placeholder="START TYPING..." />
-                                {suggestions.length > 0 && <ul className="border rounded bg-white max-h-32 overflow-y-auto mb-3 shadow-lg absolute w-[85%] z-50">
-                                    {suggestions.map((s, i) => <li key={i} onClick={() => selectSuggestion(s)} className="p-3 hover:bg-blue-50 cursor-pointer border-b text-sm"><div className="font-bold">{s.desc}</div><div className="text-xs text-slate-500">₹{s.rate} | SN: {s.barcode}</div></li>)}
-                                </ul>}
+                                {suggestions.length > 0 && <ul className="border rounded bg-white max-h-32 overflow-y-auto mb-3 shadow-lg absolute w-[85%] z-50">{suggestions.map((s, i) => <li key={i} onClick={() => selectSuggestion(s)} className="p-3 hover:bg-blue-50 cursor-pointer border-b text-sm"><div className="font-bold">{s.desc}</div><div className="text-xs text-slate-500">₹{s.rate} | SN: {s.barcode}</div></li>)}</ul>}
                                 <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded font-bold mt-2">NEXT</button>
                             </form>}
-
-                            {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-lg font-bold mb-1">UNKNOWN ITEM</h2><p className="text-xs text-slate-400 mb-2 font-mono">SCANNED: {currentScan?.srNo}</p>
-                                <input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="PRODUCT NAME" />
-                                <input type="text" value={productCodeInput} onChange={(e) => setProductCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="ITEM CODE (OPTIONAL)" />
-                                <input type="text" value={productSerialInput} onChange={(e) => setProductSerialInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="SERIAL NUMBER" />
-                                <div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
-                            
+                            {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-lg font-bold mb-1">UNKNOWN ITEM</h2><p className="text-xs text-slate-400 mb-2 font-mono">SCANNED: {currentScan?.srNo}</p><input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="PRODUCT NAME" /><input type="text" value={productCodeInput} onChange={(e) => setProductCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="ITEM CODE (OPTIONAL)" /><input type="text" value={productSerialInput} onChange={(e) => setProductSerialInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="SERIAL NUMBER" /><div className="flex gap-2"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
                             {workflowStep === 'select_product' && <div><h2 className="text-lg font-bold mb-3">SELECT PRODUCT</h2><div className="space-y-2">{multipleMatches.map((m, i) => <button key={i} onClick={() => handleProductSelection(m)} className="w-full p-4 border rounded hover:bg-blue-50 text-left"><div className="font-bold">{m.desc}</div><div className="text-xs text-slate-500">{m.code} | ₹{m.rate}</div></button>)}</div></div>}
-
                             {workflowStep === 'customer_name' && <form onSubmit={handleCustomerNameSubmit}><h2 className="text-lg font-bold mb-3">CUSTOMER NAME</h2><input ref={modalRefs.name} type="text" value={customerNameInput} onChange={(e) => setCustomerNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-4 mb-4 text-lg uppercase" placeholder="NAME" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div><button type="button" onClick={handleCustomerSkip} className="w-full mt-4 p-3 bg-slate-800 text-white font-extrabold rounded-lg hover:bg-slate-900 uppercase tracking-wide text-sm shadow-md">SKIP NAME</button></form>}
-                            
                             {workflowStep === 'customer_mobile' && <form onSubmit={handleCustomerMobileSubmit}><h2 className="text-lg font-bold mb-3">MOBILE NUMBER</h2><input ref={modalRefs.mobile} type="number" value={customerMobileInput} onChange={(e) => setCustomerMobileInput(e.target.value)} className="w-full border rounded p-4 mb-4 text-lg" placeholder="MOBILE" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-green-600 text-white py-3 rounded font-bold">SAVE</button></div><button type="button" onClick={handleCustomerMobileSubmit} className="w-full mt-4 p-3 bg-slate-800 text-white font-extrabold rounded-lg hover:bg-slate-900 uppercase tracking-wide text-sm shadow-md">SKIP NUMBER</button></form>}
-                            
                             {workflowStep === 'price' && <form onSubmit={handlePriceSubmit}><h2 className="text-lg font-bold mb-1">CONFIRM PRICE</h2><p className="text-slate-500 mb-3 text-xs truncate">{currentScan?.desc}</p><input ref={modalRefs.price} type="number" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full text-3xl font-bold text-center border-b-2 py-3 mb-4 bg-transparent" step="0.01" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleBack} className="bg-slate-100 text-slate-600 py-3 rounded font-bold">BACK</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
-                            
                             {workflowStep === 'category' && <div><div className="text-center mb-4"><h2 className="text-lg font-bold">SELECT CATEGORY</h2><p className="text-slate-500">₹{parseFloat(currentScan?.confirmedPrice).toFixed(2)}</p></div><div className="grid grid-cols-2 gap-2 mb-4"><button onClick={() => handleCategorySelect('gkCash')} className="p-3 bg-green-50 border border-green-200 text-green-800 font-bold rounded text-sm uppercase">GK Cash</button><button onClick={() => handleCategorySelect('gkBank')} className="p-3 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded text-sm uppercase">GK Bank</button><button onClick={() => handleCategorySelect('unGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded text-sm uppercase">UN GST Cash</button><button onClick={() => handleCategorySelect('unNonGstCash')} className="p-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded text-sm uppercase">UN Non GST Cash</button><button onClick={() => handleCategorySelect('un1ac')} className="p-3 bg-purple-50 border border-purple-200 text-purple-800 font-bold rounded text-sm uppercase">UN 1 AC</button><button onClick={() => handleCategorySelect('un2ac')} className="p-3 bg-orange-50 border border-orange-200 text-orange-800 font-bold rounded text-sm uppercase">UN 2 AC</button></div><button onClick={handleBack} className="w-full py-2 bg-gray-200 rounded font-bold text-gray-600 uppercase">BACK</button></div>}
                         </div>
                     </div>
                 )}
 
-                {/* EXPORT MODAL */}
                 {exportModalOpen && (
                     <div className="fixed inset-0 z-[160] flex items-center justify-center modal-overlay no-print p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative">
@@ -941,7 +662,6 @@
                     </div>
                 )}
 
-                {/* INVOICE NO / EDIT / SETTINGS MODALS */}
                 {invoiceStep !== 'idle' && <div className="fixed inset-0 z-[150] flex items-center justify-center modal-overlay no-print p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative"><button onClick={handleCancel} className="absolute top-3 right-3 text-slate-400 p-2"><Icons.X className="w-6 h-6" /></button>{invoiceStep === 'input_no' && <form onSubmit={handleInvoiceNoSubmit}><h2 className="text-lg font-bold mb-3">INVOICE NO</h2><input ref={modalRefs.invoice} type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="E.G. INV-001" /><div className="grid grid-cols-2 gap-3"><button type="button" onClick={handleInvoiceSkip} className="bg-slate-100 text-slate-600 py-3 rounded font-bold uppercase">SKIP</button><button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold uppercase">NEXT</button></div></form>}{invoiceStep === 'select_format' && <div><h2 className="text-lg font-bold mb-4 text-center">FORMAT</h2><div className="flex flex-col gap-3"><button onClick={() => handleDownload('image')} className="bg-blue-50 border border-blue-200 text-blue-800 py-3 rounded font-bold flex justify-center gap-2 uppercase"><Icons.Image className="w-5 h-5"/> IMAGE (JPG)</button><button onClick={() => handleDownload('pdf')} className="bg-red-50 border border-red-200 text-red-800 py-3 rounded font-bold flex justify-center gap-2 uppercase"><Icons.FileText className="w-5 h-5"/> PDF</button></div></div>}</div></div>}
                 
                 {editingItem && <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay no-print p-4"><div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-md relative max-h-[90vh] overflow-y-auto"><div className="flex justify-between items-center mb-4 border-b pb-2"><h2 className="text-xl font-bold">EDIT ITEM</h2><button onClick={() => setEditingItem(null)} className="text-slate-400 p-2"><Icons.X className="w-6 h-6" /></button></div><form onSubmit={handleEditSave} className="space-y-3"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">DATE</label><input type="date" value={editingItem.editDate} onChange={e => setEditingItem({...editingItem, editDate: e.target.value})} className="w-full border p-2 rounded" /></div><div><label className="text-xs font-bold text-slate-500">TIME</label><input type="time" value={editingItem.editTime} onChange={e => setEditingItem({...editingItem, editTime: e.target.value})} className="w-full border p-2 rounded" /></div></div><div><label className="text-xs font-bold text-slate-500">INVOICE NO</label><input type="text" value={editingItem.invoiceNo || ""} onChange={e => setEditingItem({...editingItem, invoiceNo: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div className="relative"> <label className="text-xs font-bold text-slate-500">PRODUCT</label><input type="text" value={editingItem.desc} onChange={handleEditSearchChange} className="w-full border p-2 rounded uppercase" />{editSuggestions.length > 0 && <ul className="absolute z-50 bg-white border rounded w-full max-h-32 overflow-y-auto shadow-lg">{editSuggestions.map((s, i) => <li key={i} onClick={() => applyEditProduct(s)} className="p-2 hover:bg-blue-50 cursor-pointer text-xs border-b uppercase">{s.desc}</li>)}</ul>}</div><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">SERIAL</label><input type="text" value={editingItem.srNo} onChange={e => setEditingItem({...editingItem, srNo: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div><label className="text-xs font-bold text-slate-500">CODE</label><input type="text" value={editingItem.code} onChange={e => setEditingItem({...editingItem, code: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div></div><div><label className="text-xs font-bold text-slate-500">CUSTOMER</label><input type="text" value={editingItem.customer} onChange={e => setEditingItem({...editingItem, customer: e.target.value.toUpperCase()})} className="w-full border p-2 rounded uppercase" /></div><div className="p-3 bg-slate-50 rounded border"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500">AMOUNT</label><input type="number" value={editingItem.currentPrice} onChange={e => setEditingItem({...editingItem, currentPrice: e.target.value})} className="w-full border p-2 rounded text-lg font-bold text-green-600" /></div><div><label className="text-xs font-bold text-slate-500">CATEGORY</label><select value={editingItem.currentCategory} onChange={e => setEditingItem({...editingItem, currentCategory: e.target.value})} className="w-full border p-2 rounded bg-white text-xs uppercase">{['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(c => <option key={c} value={c}>{c === 'unGstCash' ? 'UN GST CASH' : c === 'unNonGstCash' ? 'UN NON GST CASH' : c === 'un1ac' ? 'UN 1 A/C' : c === 'un2ac' ? 'UN 2 A/C' : c.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}</option>)}</select></div></div></div><div className="flex gap-3 pt-2 border-t"><button type="button" onClick={handlePrintFromEdit} className="flex-1 bg-green-100 text-green-700 py-2 rounded font-bold flex justify-center items-center gap-1 uppercase"><Icons.Printer className="w-4 h-4"/> PRINT</button><button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded font-bold uppercase">SAVE</button><button type="button" onClick={handleDeleteFromEdit} className="px-3 bg-red-100 text-red-600 rounded"><Icons.Trash className="w-5 h-5" /></button></div></form></div></div>}
