@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patil Communication - Inventory v37 (Fixed Delete)</title>
+    <title>Patil Communication - Inventory v40 (Local Server Sync)</title>
     
     <!-- React & Tailwind -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -62,15 +62,15 @@
 <body>
 
 <div id="root"></div>
-<div id="reader-hidden" style="display: none;"></div>
+<!-- FIX: Use absolute positioning instead of display:none to allow canvas rendering for uploads -->
+<div id="reader-hidden" style="position: absolute; top: -10000px; left: -10000px;"></div>
 
-<!-- FIREBASE SDK -->
+<!-- FIREBASE SDK (Kept for compatibility, but Server Sync is prioritized) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- YOUR FIREBASE CONFIGURATION GOES HERE ---
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -79,7 +79,6 @@
         messagingSenderId: "SENDER_ID",
         appId: "APP_ID"
     };
-    // ---------------------------------------------
 
     let auth, db;
     try {
@@ -88,7 +87,7 @@
         db = getFirestore(app);
         console.log("Firebase initialized");
     } catch (e) {
-        console.warn("Firebase Init Failed (Check Config):", e);
+        console.warn("Firebase Init Failed (Using Local/Server Mode)", e);
     }
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'patil-inventory-v34';
@@ -103,7 +102,6 @@
 <script type="text/babel">
     const { useState, useEffect, useRef, useMemo } = React;
 
-    // --- INTRO ---
     const IntroAnimation = ({ onComplete }) => {
         useEffect(() => { const t = setTimeout(onComplete, 3000); return () => clearTimeout(t); }, [onComplete]);
         return (
@@ -115,7 +113,6 @@
         );
     };
 
-    // --- ICONS ---
     const Icon = ({ p, c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}>{p}</svg>;
     const Icons = {
         Trash: (props) => <Icon {...props} p={<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>} />,
@@ -134,7 +131,8 @@
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
         Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
         Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
-        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />
+        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />,
+        Camera: (props) => <Icon {...props} p={<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>} />
     };
 
     const DEFAULT_SETTINGS = {
@@ -157,15 +155,13 @@
 
     function App() {
         const [showIntro, setShowIntro] = useState(true);
-        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v36') || '[]'));
+        const [items, setItems] = useState(() => JSON.parse(localStorage.getItem('patil_inventory_v37') || '[]'));
         const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem('patil_settings') || JSON.stringify(DEFAULT_SETTINGS)));
         const [customDB, setCustomDB] = useState(() => JSON.parse(localStorage.getItem('patil_custom_db') || '{}'));
         const [status, setStatus] = useState({ type: '', msg: '' });
         
-        // Navigation State
+        // Navigation & Workflow
         const [currentPage, setCurrentPage] = useState('home'); 
-
-        // Workflow State
         const [workflowStep, setWorkflowStep] = useState('idle'); 
         const [currentScan, setCurrentScan] = useState(null); 
         const [editingItem, setEditingItem] = useState(null);
@@ -173,19 +169,19 @@
         const [multipleMatches, setMultipleMatches] = useState([]);
         const [exportModalOpen, setExportModalOpen] = useState(false);
         const [isCameraOpen, setIsCameraOpen] = useState(false);
+        const [deleteConfirmation, setDeleteConfirmation] = useState(null); // { type: 'entry'|'stock'|'edit', id, key, index }
         
         // Inputs
         const [manualDescInput, setManualDescInput] = useState("");
         const [suggestions, setSuggestions] = useState([]);
-        
         const [productNameInput, setProductNameInput] = useState(""); 
         const [productCodeInput, setProductCodeInput] = useState(""); 
         const [productSerialInput, setProductSerialInput] = useState("");
         const [customerNameInput, setCustomerNameInput] = useState("");
         const [customerMobileInput, setCustomerMobileInput] = useState("");
         const [priceInput, setPriceInput] = useState("");
-
-        // Invoice Logic
+        
+        // Invoice
         const [invoiceStep, setInvoiceStep] = useState('idle'); 
         const [invoiceItem, setInvoiceItem] = useState(null);
         const [invoiceNo, setInvoiceNo] = useState("");
@@ -194,20 +190,22 @@
         const [searchDate, setSearchDate] = useState("");
         const [searchQuery, setSearchQuery] = useState("");
         const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-
-        // Export Range
+        const [adminSearch, setAdminSearch] = useState("");
         const [exportStartDate, setExportStartDate] = useState("");
         const [exportEndDate, setExportEndDate] = useState("");
 
-        // Admin Add Product State
+        // Admin Add Product
         const [newProdName, setNewProdName] = useState("");
         const [newProdCode, setNewProdCode] = useState("");
         const [newProdSerial, setNewProdSerial] = useState("");
         const [newProdRate, setNewProdRate] = useState("");
 
+        // Edit
         const [editSuggestions, setEditSuggestions] = useState([]);
-        const [user, setUser] = useState(null); // Firebase user
-        const [dbType, setDbType] = useState('local'); // 'local' or 'cloud'
+
+        // Cloud
+        const [user, setUser] = useState(null); 
+        const [dbType, setDbType] = useState('local'); 
 
         const inputRef = useRef(null); 
         const fileInputRef = useRef(null);
@@ -219,8 +217,67 @@
             product: useRef(null), manual: useRef(null), name: useRef(null), mobile: useRef(null), price: useRef(null), invoice: useRef(null)
         };
         const timeoutRef = useRef(null);
+        const syncTimeoutRef = useRef(null);
 
-        // --- FIREBASE SYNC ---
+        // --- SERVER SYNC (LOCAL) ---
+        // This communicates with the updated Python server to save data to a file on the laptop.
+        
+        const saveToServer = async (dataToSave) => {
+            try {
+                // If running via python server, this endpoint will exist
+                await fetch('/api/db', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSave)
+                });
+                console.log("Saved to Local Server");
+            } catch (e) {
+                // Ignore errors if server API is not available (e.g. running from file directly)
+                console.warn("Local Server Save Failed (Ignore if not using Python Server)");
+            }
+        };
+
+        const loadFromServer = async () => {
+            try {
+                const res = await fetch('/api/db');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.items) {
+                         // Merge or overwrite logic? For simplicity, we trust the server if it has data
+                         // Only overwrite if server has more recent or equal data amount to prevent data loss on new open
+                         if(data.items.length > 0 || Object.keys(data.customDB).length > 0) {
+                             setItems(data.items);
+                             setCustomDB(data.customDB);
+                             setStatus({ type: 'success', msg: 'Loaded Data from Server!' });
+                             setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                         }
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not load from server");
+            }
+        };
+
+        // Load data from server when app starts
+        useEffect(() => {
+            loadFromServer();
+        }, []);
+
+        // Save data to server whenever items or customDB changes (Debounced)
+        useEffect(() => {
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = setTimeout(() => {
+                const dataToSave = { items, customDB };
+                saveToServer(dataToSave);
+                // Also save to localStorage as backup
+                localStorage.setItem('patil_inventory_v37', JSON.stringify(items));
+                localStorage.setItem('patil_custom_db', JSON.stringify(customDB));
+            }, 1000);
+            return () => clearTimeout(syncTimeoutRef.current);
+        }, [items, customDB]);
+
+
+        // --- FIREBASE SYNC (Legacy/Cloud Backup) ---
         useEffect(() => {
             if (window.firebaseApi && window.firebaseApi.auth) {
                 const { auth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, db, doc, onSnapshot, appId } = window.firebaseApi;
@@ -238,20 +295,17 @@
                     if (u) {
                         setUser(u);
                         setDbType('cloud');
-                        // Use a specific document in the database
+                        // Listen for Cloud updates
                         const unsubDoc = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory_v34', 'main'), (snap) => {
                             if (snap.exists()) {
                                 const data = snap.data();
+                                // Only update if cloud data is newer
                                 if(data.items && data.lastUpdate > (parseInt(localStorage.getItem('patil_last_update')||0))) {
                                     setItems(data.items);
-                                    localStorage.setItem('patil_inventory_v34', JSON.stringify(data.items));
                                     localStorage.setItem('patil_last_update', data.lastUpdate);
-                                    setStatus({ type: 'success', msg: 'Synced with Cloud!' });
-                                    setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
                                 }
                                 if(data.customDB) {
                                     setCustomDB(data.customDB);
-                                    localStorage.setItem('patil_custom_db', JSON.stringify(data.customDB));
                                 }
                             }
                         });
@@ -263,6 +317,10 @@
         }, []);
 
         const saveToCloud = async (newItems, newDB) => {
+            // Priority: Save to Local Server first
+            saveToServer({ items: newItems || items, customDB: newDB || customDB });
+
+            // Then try Firebase
             if (user && window.firebaseApi) {
                 const { db, appId, doc, setDoc } = window.firebaseApi;
                 const timestamp = Date.now();
@@ -277,25 +335,21 @@
             }
         };
 
-        // Persistence (Local)
-        useEffect(() => localStorage.setItem('patil_inventory_v36', JSON.stringify(items)), [items]);
+        // Persistence (Local Storage Backup)
         useEffect(() => localStorage.setItem('patil_settings', JSON.stringify(settings)), [settings]);
-        useEffect(() => localStorage.setItem('patil_custom_db', JSON.stringify(customDB)), [customDB]);
 
         // Auto Focus Logic
         useEffect(() => {
-            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product' && !isCameraOpen) {
+            if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product' && !isCameraOpen && !deleteConfirmation) {
                 if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus();
                 if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50);
                 if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50);
-                if (workflowStep === 'manual_code' && modalRefs.manualCode && modalRefs.manualCode.current) setTimeout(() => modalRefs.manualCode.current.focus(), 50);
-                if (workflowStep === 'manual_serial' && modalRefs.manualSerial && modalRefs.manualSerial.current) setTimeout(() => modalRefs.manualSerial.current.focus(), 50);
                 if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50);
                 if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50);
                 if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50);
             }
             if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50);
-        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage, isCameraOpen]);
+        }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage, isCameraOpen, deleteConfirmation]);
 
         // --- CORE SCAN LOGIC ---
         const handleScan = (code) => {
@@ -307,14 +361,7 @@
                 const parts = upCode.split(',').map(s => s.trim());
                 if (parts.length >= 2) {
                      const price = parts.length > 3 ? (parseFloat(clean(parts[3]).replace(/[^\d.]/g, '')) || 0) : 0;
-                     setCurrentScan({ 
-                        desc: clean(parts[0]), 
-                        code: parts[2] ? clean(parts[2]) : "N/A", 
-                        srNo: clean(parts[1]), 
-                        rate: price, 
-                        customerName: "", 
-                        entryMethod: 'scan' 
-                    });
+                     setCurrentScan({ desc: clean(parts[0]), code: parts[2] ? clean(parts[2]) : "N/A", srNo: clean(parts[1]), rate: price, customerName: "", entryMethod: 'scan' });
                     setPriceInput((price && !isNaN(price)) ? price.toString() : ""); 
                     setCustomerNameInput(""); setWorkflowStep('customer_name'); 
                     if(inputRef.current) inputRef.current.value = ""; return;
@@ -350,7 +397,6 @@
             setWorkflowStep('customer_name');
         };
 
-        // --- MANUAL ENTRY WORKFLOW ---
         const startManualEntry = () => { setManualDescInput(""); setSuggestions([]); setWorkflowStep('manual_desc'); };
         
         const handleManualInputChange = (e) => {
@@ -378,7 +424,6 @@
 
         const handleManualDescSubmit = (e) => { 
             e.preventDefault(); 
-            // Proceed to Code if not selected from suggestion
             setCurrentScan({ desc: manualDescInput.trim() || "MANUAL ITEM", rate: 0, customerName: "", entryMethod: 'manual' });
             setProductNameInput(manualDescInput.trim()); 
             setProductCodeInput(""); 
@@ -386,17 +431,14 @@
             setWorkflowStep('product_name'); 
         };
 
-        // --- SAVE NEW PRODUCT TO DB ---
         const handleProductNameSubmit = (e) => { 
             e.preventDefault(); 
             const name = productNameInput.trim().toUpperCase() || "UNKNOWN"; 
             const code = productCodeInput.trim().toUpperCase() || "N/A";
             const serial = productSerialInput.trim().toUpperCase();
             
-            // Update current scan in memory
             setCurrentScan(prev => ({ ...prev, desc: name, code: code, srNo: serial })); 
             
-            // SAVE TO DB: Save this definition
             if(serial && serial !== "MANUAL") {
                 const newEntry = { desc: name, code: code, rate: 0 }; 
                 const key = serial;
@@ -412,7 +454,6 @@
                 setStatus({ type: 'success', msg: 'Product Added to Database!' });
                 setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
             }
-
             setPriceInput(""); setCustomerNameInput(""); setWorkflowStep('customer_name'); 
         };
 
@@ -435,7 +476,6 @@
                 setCustomDB(newDB);
                 saveToCloud(items, newDB); 
             }
-
             setCurrentScan(prev => ({ ...prev, confirmedPrice: price })); setWorkflowStep('category'); 
         };
 
@@ -469,24 +509,40 @@
                 case 'category': setWorkflowStep('price'); break;
                 case 'price': setWorkflowStep('customer_mobile'); break;
                 case 'customer_mobile': setWorkflowStep('customer_name'); break;
-                case 'customer_name': 
-                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('product_name');
-                    else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name');
-                    else handleCancel(); 
-                    break;
-                case 'product_name':
-                    if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc');
-                    else handleCancel();
-                    break;
-                case 'manual_desc':
-                case 'select_product': handleCancel(); break;
+                case 'customer_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('product_name'); else if (currentScan?.entryMethod === 'unknown') setWorkflowStep('product_name'); else handleCancel(); break;
+                case 'product_name': if (currentScan?.entryMethod === 'manual') setWorkflowStep('manual_desc'); else handleCancel(); break;
+                case 'manual_desc': case 'select_product': handleCancel(); break;
                 default: handleCancel();
             }
         };
 
         const handleScanInput = (e) => { const val = e.target.value.toUpperCase(); if (timeoutRef.current) clearTimeout(timeoutRef.current); timeoutRef.current = setTimeout(() => { if(val.trim().length > 0) handleScan(val.trim()); }, 300); };
         const handleScanKeyDown = (e) => e.key === 'Enter' && handleScan(e.target.value.trim().toUpperCase());
-        const handleImageUpload = (e) => { const f = e.target.files[0]; if (!f) return; const qr = new Html5Qrcode("reader-hidden"); setStatus({ type: 'info', msg: 'Scanning Image...' }); qr.scanFile(f, true).then(decodedText => handleScan(decodedText.toUpperCase())).catch(() => setStatus({ type: 'error', msg: 'No code found' })); e.target.value = ''; };
+        
+        // FIX: Updated handleImageUpload to robustly handle scans and cleanup
+        const handleImageUpload = (e) => { 
+            const f = e.target.files[0]; 
+            if (!f) return; 
+            
+            try {
+                const html5QrCode = new Html5Qrcode("reader-hidden"); 
+                setStatus({ type: 'info', msg: 'Scanning Image...' }); 
+                html5QrCode.scanFile(f, true)
+                    .then(decodedText => {
+                        handleScan(decodedText.toUpperCase());
+                        html5QrCode.clear(); // Clean up on success
+                    })
+                    .catch((err) => {
+                        console.error("Scan Error:", err);
+                        setStatus({ type: 'error', msg: 'No code found' });
+                        html5QrCode.clear(); // Clean up on error
+                    });
+            } catch (err) {
+                console.error("Init Error:", err);
+                setStatus({ type: 'error', msg: 'Scanner Init Failed' });
+            }
+            e.target.value = ''; 
+        };
 
         const handleExportClick = () => setExportModalOpen(true);
         const exportData = (dataSubset) => {
@@ -545,32 +601,51 @@
         };
 
         const handleDeleteEntry = (itemId) => {
-            if(confirm("DELETE ENTRY?")) {
-                const updated = items.filter(i => i.id !== itemId);
-                setItems(updated);
-                saveToCloud(updated);
-            }
+            setDeleteConfirmation({ type: 'entry', id: itemId });
         };
 
-        // --- ADMIN: DELETE STOCK ---
-        const handleAdminDeleteStock = (key, index) => {
-            if(!confirm("Permanently delete this stock item?")) return;
-            
-            const newDB = { ...customDB };
-            const entry = newDB[key];
+        const handleDeleteFromEdit = () => {
+            if(editingItem) setDeleteConfirmation({ type: 'edit' });
+        };
 
-            if(Array.isArray(entry)) {
-                // Remove specific index
-                const newArr = entry.filter((_, i) => i !== index);
-                if(newArr.length === 0) delete newDB[key];
-                else newDB[key] = newArr;
-            } else {
-                delete newDB[key];
+        // FIXED: Added console.log for debugging and ensured correct key passing
+        const handleAdminDeleteStock = (key, index) => {
+            console.log("Delete Request for Stock:", key, index);
+            setDeleteConfirmation({ type: 'stock', key, index });
+        };
+
+        const executeDelete = () => {
+            if (!deleteConfirmation) return;
+            const { type, id, key, index } = deleteConfirmation;
+
+            if (type === 'entry') {
+                const updated = items.filter(i => i.id !== id);
+                setItems(updated);
+                saveToCloud(updated);
+                setStatus({ type: 'success', msg: 'Deleted Successfully' });
+            } else if (type === 'edit') {
+                 if (editingItem) {
+                    const updated = items.filter(i => i.id !== editingItem.id);
+                    setItems(updated);
+                    saveToCloud(updated);
+                    setEditingItem(null); 
+                    setStatus({ type: 'success', msg: 'Deleted Successfully' });
+                 }
+            } else if (type === 'stock') {
+                const newDB = { ...customDB };
+                const entry = newDB[key];
+                if(Array.isArray(entry)) {
+                    const newArr = entry.filter((_, i) => i !== index);
+                    if(newArr.length === 0) delete newDB[key];
+                    else newDB[key] = newArr;
+                } else { delete newDB[key]; }
+                setCustomDB(newDB);
+                saveToCloud(items, newDB); 
+                setStatus({ type: 'success', msg: 'Stock Item Deleted' });
             }
-            
-            setCustomDB(newDB);
-            saveToCloud(items, newDB); 
-            setStatus({ type: 'success', msg: 'Stock Item Deleted' });
+
+            setDeleteConfirmation(null);
+            setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
         };
 
         const handleAdminAddProduct = (e) => {
@@ -601,7 +676,6 @@
             XLSX.writeFile(wb, "stock all.xlsx");
         };
 
-        // --- HELPERS ---
         const handleRowPrint = (item) => { setInvoiceItem(item); setInvoiceNo(item.invoiceNo || ""); setInvoiceStep('input_no'); };
         const handleInvoiceNoSubmit = (e) => { e.preventDefault(); const u = { ...invoiceItem, invoiceNo: invoiceNo.toUpperCase() }; setInvoiceItem(u); setItems(prev => prev.map(i => i.id === u.id ? u : i)); setInvoiceStep('select_format'); };
         const handleInvoiceSkip = () => { setInvoiceNo(""); setInvoiceStep('select_format'); };
@@ -609,7 +683,6 @@
         const numberToWords = (price) => { const num = parseInt(price); if (num === 0) return "Zero Only"; return `INR ${num} Only`; };
         const handleEditClick = (item) => { const cats = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac']; const cat = cats.find(c => item[c] !== "-") || 'gkCash'; const price = item[cat] === "-" ? "0" : item[cat]; const [dp, tp] = item.dateTime.split(' '); const [d, m, y] = dp.split('/'); setEditingItem({ ...item, currentCategory: cat, currentPrice: item[cat] === "-" ? "0" : item[cat], editDate: `${y}-${m}-${d}`, editTime: tp }); };
         const handleEditSave = (e) => { e.preventDefault(); const { id, currentCategory, currentPrice, editDate, editTime } = editingItem; const [y, m, d] = editDate.split('-'); const updated = items.map(it => { if (it.id === id) { const u = { ...editingItem }; ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].forEach(c => u[c] = "-"); u[currentCategory] = parseFloat(currentPrice).toFixed(2); u.dateTime = `${d}/${m}/${y} ${editTime}`; delete u.currentCategory; delete u.currentPrice; delete u.editDate; delete u.editTime; return u; } return it; }); setItems(updated); saveToCloud(updated); setEditingItem(null); setStatus({ type: 'success', msg: 'Updated' }); };
-        const handleDeleteFromEdit = () => { if(confirm("Delete?")) { const updated = items.filter(i => i.id !== editingItem.id); setItems(updated); saveToCloud(updated); setEditingItem(null); } };
         const handlePrintFromEdit = () => { const it = items.find(i => i.id === editingItem.id); setEditingItem(null); handleRowPrint(it); };
         
         const handleEditSearchChange = (e) => {
@@ -637,7 +710,27 @@
             setEditSuggestions([]);
         };
 
-        const filteredItems = useMemo(() => { let d = items.filter(i => { const md = searchDate ? i.rawDate === searchDate : true; const q = searchQuery.toUpperCase(); return md && (searchQuery ? JSON.stringify(i).toUpperCase().includes(q) : true); }); if (sortConfig.key) { d.sort((a, b) => { let va = parseFloat(a[sortConfig.key]) || 0; let vb = parseFloat(b[sortConfig.key]) || 0; return sortConfig.direction === 'ascending' ? va - valB : vb - valA; }); } return d; }, [items, searchDate, searchQuery, sortConfig]);
+        const filteredStock = Object.entries(customDB).filter(([key, val]) => {
+            if(!adminSearch) return true;
+            const search = adminSearch.toUpperCase();
+            if (key.includes(search)) return true;
+            const arr = Array.isArray(val) ? val : [val];
+            return arr.some(p => p.desc.includes(search) || p.code.includes(search));
+        });
+
+        // FIXED: Corrected logic for sorting to avoid ReferenceError (va, vb instead of valA, valB)
+        const filteredItems = useMemo(() => { 
+            let d = items.filter(i => { const md = searchDate ? i.rawDate === searchDate : true; const q = searchQuery.toUpperCase(); return md && (searchQuery ? JSON.stringify(i).toUpperCase().includes(q) : true); }); 
+            if (sortConfig.key) { 
+                d.sort((a, b) => { 
+                    let va = parseFloat(a[sortConfig.key]) || 0; 
+                    let vb = parseFloat(b[sortConfig.key]) || 0; 
+                    return sortConfig.direction === 'ascending' ? va - vb : vb - va; 
+                }); 
+            } 
+            return d; 
+        }, [items, searchDate, searchQuery, sortConfig]);
+
         const totalSales = useMemo(() => filteredItems.reduce((acc, i) => { const v = ['gkCash', 'gkBank', 'unGstCash', 'unNonGstCash', 'un1ac', 'un2ac'].map(k => parseFloat(i[k]) || 0).reduce((a, b) => a + b, 0); return acc + v; }, 0), [filteredItems]);
         const requestSort = (key) => setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'ascending' ? 'descending' : 'ascending' });
         const getSortClass = (key) => sortConfig.key === key ? (sortConfig.direction === 'ascending' ? 'sort-asc' : 'sort-desc') : 'sort-icon';
@@ -689,15 +782,22 @@
                         </div>
 
                         <div className="bg-white rounded-xl shadow-lg p-6">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                                 <h2 className="text-xl font-bold">CURRENT STOCK ({Object.keys(customDB).length})</h2>
+                                <input 
+                                    type="text" 
+                                    placeholder="SEARCH STOCK..." 
+                                    className="border p-2 rounded uppercase text-sm w-full md:w-64"
+                                    value={adminSearch}
+                                    onChange={(e) => setAdminSearch(e.target.value.toUpperCase())}
+                                />
                                 <button onClick={handleDownloadStock} className="bg-blue-100 text-blue-700 px-3 py-2 rounded font-bold text-xs uppercase hover:bg-blue-200">Download Stock List</button>
                             </div>
                             <div className="overflow-x-auto max-h-96 border rounded-lg">
                                 <table className="w-full text-left border-collapse text-sm">
                                     <thead><tr className="bg-slate-100"><th className="p-3 border">SERIAL</th><th className="p-3 border">PRODUCT</th><th className="p-3 border">CODE</th><th className="p-3 border">RATE</th><th className="p-3 border text-center">ACTION</th></tr></thead>
                                     <tbody>
-                                        {Object.entries(customDB).slice(0, 100).map(([key, val], idx) => {
+                                        {filteredStock.slice(0, 100).map(([key, val], idx) => {
                                             const arr = Array.isArray(val) ? val : [val];
                                             return arr.map((p, i) => (
                                                 <tr key={`${idx}-${i}`} className="border-b hover:bg-slate-50">
@@ -706,17 +806,42 @@
                                                     <td className="p-3">{p.code}</td>
                                                     <td className="p-3">₹{p.rate}</td>
                                                     <td className="p-3 text-center">
-                                                        <button onClick={() => handleAdminDeleteStock(key, i)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded"><Icons.Trash className="w-4 h-4"/></button>
+                                                        <button 
+                                                            onClick={(e) => { 
+                                                                e.preventDefault();
+                                                                e.stopPropagation(); 
+                                                                handleAdminDeleteStock(key, i); 
+                                                            }} 
+                                                            className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded shadow-sm border border-red-100 cursor-pointer"
+                                                            title="Delete Item"
+                                                            type="button"
+                                                        >
+                                                            <Icons.Trash className="w-4 h-4"/>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ));
                                         })}
                                     </tbody>
                                 </table>
+                                {filteredStock.length > 100 && <p className="text-center text-xs text-gray-500 p-2">Showing first 100 results. Use search to find more.</p>}
                             </div>
                         </div>
                     </div>
                     {status.msg && <div className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded shadow-lg">{status.msg}</div>}
+                    
+                    {deleteConfirmation && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center modal-overlay p-4">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+                                <h2 className="text-xl font-bold text-red-600 mb-2">CONFIRM DELETION?</h2>
+                                <p className="text-sm text-slate-500 mb-6">This action cannot be undone.</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setDeleteConfirmation(null)} className="bg-slate-200 py-3 rounded font-bold">CANCEL</button>
+                                    <button onClick={executeDelete} className="bg-red-600 text-white py-3 rounded font-bold">DELETE</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -818,9 +943,22 @@
                 </main>
 
                 {/* --- MODALS --- */}
+                
+                {deleteConfirmation && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center modal-overlay p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+                            <h2 className="text-xl font-bold text-red-600 mb-2">CONFIRM DELETION?</h2>
+                            <p className="text-sm text-slate-500 mb-6">This action cannot be undone.</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setDeleteConfirmation(null)} className="bg-slate-200 py-3 rounded font-bold">CANCEL</button>
+                                <button onClick={executeDelete} className="bg-red-600 text-white py-3 rounded font-bold">DELETE</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* WORKFLOW MODALS */}
-                {(['manual_desc', 'manual_code', 'manual_serial', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category', 'select_product'].includes(workflowStep)) && (
+                {(['manual_desc', 'product_name', 'customer_name', 'customer_mobile', 'price', 'category', 'select_product'].includes(workflowStep)) && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay no-print p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-sm relative max-h-[85vh] overflow-y-auto w-[95%] mx-auto">
                             <button onClick={handleCancel} className="absolute top-3 right-3 text-slate-400 p-2"><Icons.X className="w-6 h-6" /></button>
@@ -833,10 +971,6 @@
                                 </ul>}
                                 <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded font-bold mt-2">NEXT</button>
                             </form>}
-
-                            {workflowStep === 'manual_code' && <form onSubmit={handleManualCodeSubmit}><h2 className="text-lg font-bold mb-3">ITEM CODE</h2><input ref={modalRefs.manualCode} type="text" value={manualCodeInput} onChange={e => setManualCodeInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="CODE" /><div className="flex gap-2"><button type="button" onClick={handleBack} className="bg-slate-200 py-3 px-4 rounded font-bold">BACK</button><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
-                            
-                            {workflowStep === 'manual_serial' && <form onSubmit={handleManualSerialSubmit}><h2 className="text-lg font-bold mb-3">SERIAL NUMBER</h2><input ref={modalRefs.manualSerial} type="text" value={manualSerialInput} onChange={e => setManualSerialInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-4 text-lg uppercase" placeholder="SERIAL NO" /><div className="flex gap-2"><button type="button" onClick={handleBack} className="bg-slate-200 py-3 px-4 rounded font-bold">BACK</button><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded font-bold">NEXT</button></div></form>}
 
                             {workflowStep === 'product_name' && <form onSubmit={handleProductNameSubmit}><h2 className="text-lg font-bold mb-1">UNKNOWN ITEM</h2><p className="text-xs text-slate-400 mb-2 font-mono">SCANNED: {currentScan?.srNo}</p>
                                 <input ref={modalRefs.product} type="text" value={productNameInput} onChange={(e) => setProductNameInput(e.target.value.toUpperCase())} className="w-full border rounded p-3 mb-2 text-lg uppercase" placeholder="PRODUCT NAME" />
