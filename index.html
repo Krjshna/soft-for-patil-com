@@ -128,7 +128,8 @@
         Printer: (props) => <Icon {...props} p={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>} />,
         FileText: (props) => <Icon {...props} p={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />,
         Image: (props) => <Icon {...props} p={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />,
-        Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />
+        Settings: (props) => <Icon {...props} p={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
+        Database: (props) => <Icon {...props} p={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />
     };
 
     const DEFAULT_SETTINGS = {
@@ -149,6 +150,7 @@
         const [customDB, setCustomDB] = useState({});
         const [status, setStatus] = useState({ type: '', msg: '' });
         const [isCloudConnected, setIsCloudConnected] = useState(false);
+        const [dbSetupRequired, setDbSetupRequired] = useState(false);
         const [user, setUser] = useState(null); 
         
         // Navigation & Workflow
@@ -213,6 +215,11 @@
                         const unsubSales = onSnapshot(doc(db, 'artifacts', appId, 'data', 'sales'), (snap) => {
                             if (snap.exists()) {
                                 setItems(snap.data().items || []);
+                            }
+                        }, (err) => {
+                            console.error("Sales Sync Error:", err);
+                            if (JSON.stringify(err).includes("database (default) does not exist") || err.message?.includes("database (default) does not exist")) {
+                                setDbSetupRequired(true);
                             }
                         });
 
@@ -451,6 +458,28 @@
         useEffect(() => { if(!showIntro && !editingItem && invoiceStep === 'idle' && !isSettingsOpen && !exportModalOpen && currentPage === 'home' && workflowStep !== 'select_product' && !isCameraOpen && !deleteConfirmation) { if (workflowStep === 'idle' && inputRef.current) inputRef.current.focus(); if (workflowStep === 'product_name' && modalRefs.product.current) setTimeout(() => modalRefs.product.current.focus(), 50); if (workflowStep === 'manual_desc' && modalRefs.manual.current) setTimeout(() => modalRefs.manual.current.focus(), 50); if (workflowStep === 'customer_name' && modalRefs.name.current) setTimeout(() => modalRefs.name.current.focus(), 50); if (workflowStep === 'customer_mobile' && modalRefs.mobile.current) setTimeout(() => modalRefs.mobile.current.focus(), 50); if (workflowStep === 'price' && modalRefs.price.current) setTimeout(() => modalRefs.price.current.select(), 50); } if(invoiceStep === 'input_no' && modalRefs.invoice.current) setTimeout(() => modalRefs.invoice.current.focus(), 50); }, [workflowStep, showIntro, editingItem, invoiceStep, isSettingsOpen, exportModalOpen, currentPage, isCameraOpen, deleteConfirmation]);
 
         if (showIntro) return <IntroAnimation onComplete={() => setShowIntro(false)} />;
+
+        if (dbSetupRequired) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
+                    <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg">
+                        <div className="text-red-500 mb-4"><Icons.Database className="w-16 h-16 mx-auto"/></div>
+                        <h1 className="text-2xl font-bold text-slate-800 mb-2">Database Not Created Yet</h1>
+                        <p className="text-slate-600 mb-6">Your app is connected to Google, but the database storage doesn't exist.</p>
+                        
+                        <ol className="text-left text-sm bg-slate-100 p-4 rounded-lg mb-6 space-y-2 border border-slate-200">
+                            <li>1. Go to <a href="https://console.firebase.google.com/project/inventory-app-ce185/firestore" target="_blank" className="text-blue-600 underline font-bold">Firebase Console</a></li>
+                            <li>2. Click <span className="font-bold">Create Database</span></li>
+                            <li>3. Select a location (e.g. <b>asia-south1</b> or <b>us-central1</b>)</li>
+                            <li>4. Select <span className="font-bold">Start in Test Mode</span></li>
+                            <li>5. Click <span className="font-bold">Create</span></li>
+                        </ol>
+                        
+                        <button onClick={() => window.location.reload()} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">I Have Done This (Reload)</button>
+                    </div>
+                </div>
+            );
+        }
 
         if (currentPage === 'admin') {
             return (
